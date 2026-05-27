@@ -39,31 +39,36 @@ const DB = {
      * 智能合并模块：
      * - 新模块（ID 不存在）→ 自动添加
      * - 已有模块 → 用默认数据更新 content/title/hasExam/examId
-     *   这是为了确保代码更新（如加截图）能同步到已有用户
+     * - 已废弃模块（不在默认列表中）→ 自动删除
      */
     _mergeModules(defaultModules) {
         const existing = this.getModules();
+        const defaultIds = new Set(defaultModules.map(m => m.id));
+
+        // 删除已废弃的模块（不在新默认列表中的）
+        let filtered = existing.filter(m => defaultIds.has(m.id));
+        if (filtered.length !== existing.length) {
+            existing.length = 0;
+            existing.push(...filtered);
+        }
+
         const existingMap = new Map(existing.map(m => [m.id, m]));
-        let changed = false;
 
         defaultModules.forEach(dm => {
             const old = existingMap.get(dm.id);
             if (!old) {
                 // 新模块：直接添加
                 existing.push(dm);
-                existingMap.set(dm.id, dm);
-                changed = true;
             } else {
-                // 已有模块：用默认内容覆盖，确保截图等更新生效
+                // 已有模块：用默认内容覆盖
                 old.title = dm.title;
                 old.content = dm.content;
                 old.hasExam = dm.hasExam;
                 old.examId = dm.examId;
-                changed = true;
             }
         });
 
-        if (changed) this.saveModules(existing);
+        this.saveModules(existing);
     },
 
     /**
