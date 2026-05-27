@@ -152,7 +152,7 @@ const Trainee = {
         container.innerHTML = `
             <div class="checklist-fullscreen">
                 <div class="checklist-fs-header">
-                    <button class="btn btn-ghost btn-sm" onclick="Trainee.renderStudyPanel()">← 返回</button>
+                    <button class="checklist-back-btn" onclick="Trainee.renderStudyPanel()" aria-label="返回">←<span class="checklist-back-label"> 返回</span></button>
                     <h2 class="checklist-fs-title">📋 软件硬件能力清单</h2>
                     <span class="checklist-fs-spacer"></span>
                 </div>
