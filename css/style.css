@@ -481,6 +481,138 @@ body {
 }
 .import-preview-table th { background: #FAFAFA; }
 
+/* ========== 能力清单 ========== */
+
+/* -- 入口卡片 -- */
+.checklist-entry-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--primary);
+}
+.checklist-entry-main { flex: 1; min-width: 0; }
+.checklist-entry-title { font-size: 17px; font-weight: 600; margin-bottom: 2px; }
+.checklist-entry-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+
+/* -- 入口卡片内迷你进度条 -- */
+.checklist-mini-bar { display: flex; align-items: center; gap: 10px; }
+.checklist-mini-track {
+    flex: 1; max-width: 160px;
+    height: 6px; background: var(--border);
+    border-radius: 3px; overflow: hidden;
+}
+.checklist-mini-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--success));
+    border-radius: 3px; transition: width 0.3s;
+}
+.checklist-mini-text { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+
+/* -- 弹窗内顶部总进度条 -- */
+.checklist-overall-bar {
+    padding: 16px 24px;
+    background: #FAFAFA;
+    border-bottom: 1px solid var(--border);
+}
+.checklist-overall-info {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+}
+.checklist-overall-label { font-weight: 700; font-size: 15px; }
+.checklist-overall-num { font-size: 15px; font-weight: 700; color: var(--primary); }
+.checklist-overall-track {
+    height: 10px; background: var(--border);
+    border-radius: 5px; overflow: hidden; margin-bottom: 12px;
+}
+.checklist-overall-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--danger), var(--warning), var(--success));
+    border-radius: 5px; transition: width 0.4s;
+    min-width: 0;
+}
+.checklist-legend {
+    display: flex; gap: 20px; font-size: 12px; color: var(--text-secondary);
+}
+.checklist-legend-item { display: flex; align-items: center; gap: 4px; }
+.cl-dot {
+    display: inline-block;
+    width: 10px; height: 10px; border-radius: 50%;
+}
+.cl-dot-mastered { background: var(--success); }
+.cl-dot-unskilled { background: var(--warning); }
+.cl-dot-unlearned { border: 2px solid var(--danger); background: #FFF; }
+
+/* -- 分类容器 -- */
+.checklist-cats-wrapper { padding: 0; }
+
+/* -- 分类头部（手风琴触控行） -- */
+.checklist-cat-header {
+    display: flex; align-items: center;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: #FFF; cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+}
+.checklist-cat-header:active { background: var(--bg); }
+.checklist-cat-arrow { font-size: 13px; color: var(--text-muted); margin-right: 10px; width: 16px; flex-shrink: 0; }
+.checklist-cat-name { flex: 1; font-weight: 600; font-size: 15px; }
+.checklist-cat-count { font-size: 14px; font-weight: 700; flex-shrink: 0; }
+
+/* -- 分类正文（清单项列表） -- */
+.checklist-cat-body { /* display controlled by JS */ }
+
+/* -- 单个清单项（三态） -- */
+.checklist-item {
+    display: flex; align-items: center;
+    padding: 13px 24px 13px 38px;
+    min-height: 48px;
+    border-bottom: 1px solid #F0F0F5;
+    cursor: pointer; user-select: none;
+    transition: background 0.15s;
+}
+.checklist-item:active { background: var(--bg); }
+.checklist-item-icon {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 14px; flex-shrink: 0;
+    font-size: 14px; font-weight: 700;
+}
+.checklist-item-text { font-size: 14px; line-height: 1.5; }
+
+/* 已掌握 — 绿色 */
+.cl-mastered { border-left: 4px solid var(--success); }
+.cl-mastered .checklist-item-icon { background: var(--success); color: #FFF; }
+
+/* 不熟练 — 黄色 */
+.cl-unskilled { border-left: 4px solid var(--warning); }
+.cl-unskilled .checklist-item-icon { background: var(--warning); color: #FFF; }
+
+/* 未掌握 — 红色 */
+.cl-unlearned { border-left: 4px solid var(--danger); }
+.cl-unlearned .checklist-item-icon { border: 2px solid var(--danger); color: var(--danger); background: #FFF; }
+
+/* -- 进度面板清单摘要 -- */
+.checklist-progress-fill { background: linear-gradient(90deg, var(--primary), var(--success)); }
+
+/* -- 进度面板四列网格 -- */
+.progress-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+/* -- 培训师监管统计网格 -- */
+.trainee-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    text-align: center;
+}
+
 /* ========== 响应式：手机端适配（≤600px） ========== */
 @media (max-width: 600px) {
 
@@ -586,6 +718,41 @@ body {
     .data-table th { font-size: 11px; }
     .empty-state { padding: 28px 16px; font-size: 14px; }
 
+    /* -- 能力清单 -- */
+    .checklist-entry-card {
+        flex-direction: column; align-items: stretch; gap: 12px;
+    }
+    .checklist-entry-card .btn { width: 100%; }
+    .checklist-mini-bar { gap: 8px; }
+    .checklist-mini-track { max-width: none; }
+
+    .checklist-overall-bar { padding: 12px 16px; }
+    .checklist-overall-label { font-size: 14px; }
+    .checklist-overall-num { font-size: 14px; }
+    .checklist-legend { gap: 14px; font-size: 11px; }
+    .checklist-overall-track { height: 8px; margin-bottom: 10px; }
+
+    .checklist-cat-header { padding: 14px 16px; min-height: 48px; }
+    .checklist-cat-name { font-size: 14px; }
+    .checklist-cat-count { font-size: 13px; }
+
+    .checklist-item { padding: 14px 16px 14px 30px; min-height: 48px; }
+    .checklist-item-icon { width: 24px; height: 24px; margin-right: 12px; font-size: 13px; }
+    .checklist-item-text { font-size: 13px; }
+
+    /* -- 进度面板四列 → 两列 -- */
+    .progress-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .progress-grid-4 > div > div:first-child { font-size: 24px !important; }
+
+    /* -- 培训师监管统计四列 → 两列 -- */
+    .trainee-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
     /* -- 培训师端 -- */
     .form-input, .form-textarea, .form-select { font-size: 16px; }
     .inline-flex { flex-direction: column; align-items: stretch; }
@@ -609,6 +776,17 @@ body {
     .modal-header { padding: 10px 12px; }
     .modal-body { padding: 12px; }
     .modal-footer { padding: 10px 12px; }
+
+    /* -- 能力清单极小屏 -- */
+    .checklist-cat-header { padding: 12px 14px; }
+    .checklist-cat-name { font-size: 13px; }
+    .checklist-item { padding: 12px 14px 12px 26px; }
+    .checklist-item-icon { width: 22px; height: 22px; margin-right: 10px; }
+    .checklist-item-text { font-size: 12px; }
+    .checklist-overall-bar { padding: 10px 12px; }
+    .checklist-overall-label { font-size: 13px; }
+    .checklist-overall-num { font-size: 13px; }
+    .checklist-legend { gap: 10px; font-size: 10px; }
 }
 
 /* -- 触屏设备去掉 hover 效果（保留到桌面端） -- */
@@ -626,4 +804,6 @@ body {
     .question-img:hover { transform: scale(1.02); }
     .screenshot-img:hover { transform: scale(1.01); box-shadow: var(--shadow); }
     .header-trainer .btn-outline:hover { background: #FFF; color: #1D1D1F; }
+    .checklist-cat-header:hover { background: #FAFAFA; }
+    .checklist-item:hover { background: #F8FAFF; }
 }

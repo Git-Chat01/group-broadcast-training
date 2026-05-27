@@ -18,6 +18,7 @@ const DB = {
             localStorage.setItem("adminPassword", defaults.adminPassword || "admin123");
             localStorage.setItem("modules", JSON.stringify(defaults.modules || []));
             localStorage.setItem("exams", JSON.stringify(defaults.exams || {}));
+            localStorage.setItem("checklist", JSON.stringify(defaults.checklist || []));
             localStorage.setItem("trainees", JSON.stringify(defaults.trainees || {}));
             localStorage.setItem("dataVersion", codeVersion);
             return;
@@ -29,6 +30,7 @@ const DB = {
         // 版本不一致：智能合并
         this._mergeModules(defaults.modules || []);
         this._mergeExams(defaults.exams || {});
+        this._mergeChecklist(defaults.checklist || []);
         // adminPassword 和 trainees 始终保留用户数据，不覆盖
         localStorage.setItem("dataVersion", codeVersion);
     },
@@ -86,6 +88,32 @@ const DB = {
         if (changed) this.saveExams(existing);
     },
 
+    /**
+     * 智能合并清单：
+     * - 新项（ID 不存在）→ 自动添加
+     * - 已有项 → 用默认数据更新 category/item 文本
+     * - 已删除的项保留（培训师可能已习惯某项）
+     */
+    _mergeChecklist(defaultChecklist) {
+        const existing = this.getChecklist();
+        const existingMap = new Map(existing.map(m => [m.id, m]));
+        let changed = false;
+
+        defaultChecklist.forEach(dm => {
+            const old = existingMap.get(dm.id);
+            if (!old) {
+                existing.push(dm);
+                changed = true;
+            } else {
+                old.category = dm.category;
+                old.item = dm.item;
+                changed = true;
+            }
+        });
+
+        if (changed) this.saveChecklist(existing);
+    },
+
     // ===== 管理密码 =====
     getAdminPassword() {
         return localStorage.getItem("adminPassword") || "admin123";
@@ -139,6 +167,15 @@ const DB = {
         this.saveExams(exams);
     },
 
+    // ===== 能力清单 =====
+    getChecklist() {
+        try { return JSON.parse(localStorage.getItem("checklist")) || []; }
+        catch (e) { return []; }
+    },
+    saveChecklist(checklist) {
+        localStorage.setItem("checklist", JSON.stringify(checklist));
+    },
+
     // ===== 新人数据 =====
     getTrainees() {
         try { return JSON.parse(localStorage.getItem("trainees")) || {}; }
@@ -161,7 +198,7 @@ const DB = {
     getTrainee(name) {
         const trainees = this.getTrainees();
         if (!trainees[name]) {
-            trainees[name] = { moduleProgress: {}, examHistory: [] };
+            trainees[name] = { moduleProgress: {}, examHistory: [], checklistProgress: {} };
             this.saveTrainees(trainees);
         }
         return trainees[name];
@@ -173,6 +210,21 @@ const DB = {
         if (!trainees[name]) trainees[name] = { moduleProgress: {}, examHistory: [] };
         trainees[name].moduleProgress[moduleId] = completed;
         this.saveTrainees(trainees);
+    },
+
+    /** 更新新人清单项状态（mastered / unskilled / unlearned） */
+    setChecklistItem(name, itemId, status) {
+        const trainees = this.getTrainees();
+        if (!trainees[name]) trainees[name] = { moduleProgress: {}, examHistory: [], checklistProgress: {} };
+        if (!trainees[name].checklistProgress) trainees[name].checklistProgress = {};
+        trainees[name].checklistProgress[itemId] = status;
+        this.saveTrainees(trainees);
+    },
+
+    /** 获取新人清单进度（返回 map: itemId → status） */
+    getChecklistProgress(name) {
+        const t = this.getTrainee(name);
+        return t.checklistProgress || {};
     },
 
     /** 添加考试记录 */
