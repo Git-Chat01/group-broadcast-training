@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>团播主持新人培训系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ==================== 登录页 ==================== -->
+    <div class="view" id="view-login">
+        <div class="login-container">
+            <h1 class="login-title">团播主持新人培训系统</h1>
+            <p class="login-subtitle">输入你的艺名，开始今天的复习和考核</p>
+
+            <!-- 新人入口 — 主体 -->
+            <div class="login-card login-card-main">
+                <div class="login-card-icon">🎤</div>
+                <h3>新人主持入口</h3>
+                <input type="text" class="login-input" id="inputTraineeName" placeholder="请输入你的艺名">
+                <button class="btn btn-primary btn-block" id="btnTraineeLogin">进入学习</button>
+            </div>
+
+            <!-- 培训师入口 — 弱化 -->
+            <div class="trainer-entry">
+                <button class="btn-trainer-toggle" id="btnToggleTrainer">培训师管理</button>
+                <div class="trainer-entry-form" id="trainerEntryForm" style="display:none;">
+                    <input type="password" class="login-input" id="inputAdminPassword" placeholder="请输入管理密码">
+                    <button class="btn btn-outline btn-sm" id="btnTrainerLogin">进入后台</button>
+                    <p class="login-hint" id="loginError" style="display:none;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 新人端 ==================== -->
+    <div class="view" id="view-trainee">
+        <!-- 顶部栏 -->
+        <header class="header">
+            <h1 class="header-title">团播主持新人培训</h1>
+            <div class="header-right">
+                <span class="header-user" id="traineeNameDisplay"></span>
+                <button class="btn btn-sm btn-outline" id="btnTraineeLogout">退出</button>
+            </div>
+        </header>
+        <!-- Tab 导航 -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="study">培训模块</button>
+            <button class="tab-btn" data-tab="exam">试卷考试</button>
+            <button class="tab-btn" data-tab="progress">我的进度</button>
+        </nav>
+        <!-- 内容区 -->
+        <main class="main-content">
+            <section class="tab-panel active" id="trainee-panel-study"></section>
+            <section class="tab-panel" id="trainee-panel-exam"></section>
+            <section class="tab-panel" id="trainee-panel-progress"></section>
+        </main>
+    </div>
+
+    <!-- ==================== 培训师端 ==================== -->
+    <div class="view" id="view-trainer">
+        <header class="header header-trainer">
+            <h1 class="header-title">培训师管理后台</h1>
+            <div class="header-right">
+                <button class="btn btn-sm btn-outline" id="btnTrainerLogout">退出</button>
+            </div>
+        </header>
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="content">内容管理</button>
+            <button class="tab-btn" data-tab="monitor">新人监管</button>
+        </nav>
+        <main class="main-content">
+            <section class="tab-panel active" id="trainer-panel-content"></section>
+            <section class="tab-panel" id="trainer-panel-monitor"></section>
+        </main>
+    </div>
+
+    <!-- ==================== 通用弹窗 ==================== -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;">
+        <div class="modal-content" id="modalContent">
+            <!-- 动态填充 -->
+        </div>
+    </div>
+
+    <!-- 数据层 -->
+    <script src="js/storage.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/exams_data.js"></script>
+    <!-- 业务模块（按依赖顺序加载） -->
+    <script src="js/auth.js"></script>
+    <script src="js/trainee.js"></script>
+    <script src="js/import.js"></script>
+    <script src="js/trainer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

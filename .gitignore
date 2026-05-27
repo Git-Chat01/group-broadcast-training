@@ -1,0 +1,15 @@
+node_modules/
+python-deps/
+.claude/
+*.pdf
+*.docx
+CLAUDE.md
+ARCHITECTURE.md
+ROADMAP.md
+RETROSPECTIVE.md
+package.json
+package-lock.json
+extract-pdf-images.cjs
+setup-claude.ps1
+start-claude.ps1
+install-config.ps1
