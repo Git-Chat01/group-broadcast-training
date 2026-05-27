@@ -29,7 +29,7 @@ const Trainee = {
             <div class="card checklist-entry-card">
                 <div class="checklist-entry-main">
                     <div class="checklist-entry-title">📋 软件硬件能力清单</div>
-                    <div class="checklist-entry-sub">自查软硬件掌握情况，缺哪补哪</div>
+                    <div class="checklist-entry-sub">诚实面对自己，缺什么就练什么</div>
                     <div class="checklist-mini-bar">
                         <div class="checklist-mini-track">
                             <div class="checklist-mini-fill" style="width:${clPct}%;"></div>
@@ -100,8 +100,9 @@ const Trainee = {
 
     // ==================== 能力清单 ====================
 
-    /** 打开能力清单弹窗（手风琴 + 三态切换） */
+    /** 打开能力清单（全屏视图，替换培训面板内容） */
     openChecklist() {
+        const container = document.getElementById("trainee-panel-study");
         const checklist = DB.getChecklist();
         const progress = DB.getChecklistProgress(Auth.traineeName);
         if (checklist.length === 0) { alert("暂无能力清单数据"); return; }
@@ -117,20 +118,19 @@ const Trainee = {
         const mastered = checklist.filter(c => progress[c.id] === "mastered").length;
         const pct = Math.round(mastered / total * 100);
 
-        // 统计每个分类
         let catsHTML = "";
         let first = true;
+        const iconMap = { mastered: "✓", unskilled: "◐", unlearned: "○" };
+        const clsMap = { mastered: "cl-mastered", unskilled: "cl-unskilled", unlearned: "cl-unlearned" };
+
         groups.forEach((items, catName) => {
             const catMastered = items.filter(c => progress[c.id] === "mastered").length;
-            const allDone = catMastered === items.length;
-            const catColor = allDone ? "var(--success)" : (catMastered === 0 ? "var(--danger)" : "var(--text-secondary)");
+            const catColor = catMastered === items.length ? "var(--success)" : (catMastered === 0 ? "var(--danger)" : "var(--text-secondary)");
             const catId = "cat-" + catName.replace(/[^a-zA-Z0-9一-龥]/g, "");
-            const iconMap = { mastered: "✓", unskilled: "◐", unlearned: "○" };
-            const clsMap = { mastered: "cl-mastered", unskilled: "cl-unskilled", unlearned: "cl-unlearned" };
 
             catsHTML += `
                 <div class="checklist-category">
-                    <div class="checklist-cat-header" onclick="Trainee.toggleCategory('${catId}')" style="min-height:48px;display:flex;align-items:center;">
+                    <div class="checklist-cat-header" onclick="Trainee.toggleCategory('${catId}')">
                         <span class="checklist-cat-arrow" id="${catId}-arrow">${first ? "▼" : "▶"}</span>
                         <span class="checklist-cat-name">${catName}</span>
                         <span class="checklist-cat-count" style="color:${catColor};">${catMastered}/${items.length}</span>
@@ -149,12 +149,13 @@ const Trainee = {
             first = false;
         });
 
-        Modal.show(`
-            <div class="modal-header">
-                <h2 class="modal-title">📋 软件硬件能力清单</h2>
-                <button class="modal-close" onclick="Modal.hide()">&times;</button>
-            </div>
-            <div class="modal-body" style="padding:0;">
+        container.innerHTML = `
+            <div class="checklist-fullscreen">
+                <div class="checklist-fs-header">
+                    <button class="btn btn-ghost btn-sm" onclick="Trainee.renderStudyPanel()">← 返回</button>
+                    <h2 class="checklist-fs-title">📋 软件硬件能力清单</h2>
+                    <span class="checklist-fs-spacer"></span>
+                </div>
                 <div class="checklist-overall-bar">
                     <div class="checklist-overall-info">
                         <span class="checklist-overall-label">整体掌握</span>
@@ -173,10 +174,7 @@ const Trainee = {
                     ${catsHTML}
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="Modal.hide();Trainee.renderStudyPanel();Trainee.renderProgressPanel();">关闭</button>
-            </div>
-        `);
+        `;
     },
 
     /** 三态切换：unlearned → unskilled → mastered → unlearned */
