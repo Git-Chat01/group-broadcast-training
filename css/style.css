@@ -635,10 +635,10 @@ body {
 /* -- 进度面板清单摘要 -- */
 .checklist-progress-fill { background: linear-gradient(90deg, var(--primary), var(--success)); }
 
-/* -- 进度面板四列网格 -- */
-.progress-grid-4 {
+/* -- 进度面板三列网格 -- */
+.progress-grid-3 {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     text-align: center;
     margin-bottom: 16px;
@@ -647,7 +647,7 @@ body {
 /* -- 培训师监管统计网格 -- */
 .trainee-stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     text-align: center;
 }
@@ -793,12 +793,11 @@ body {
     .checklist-item-icon { width: 24px; height: 24px; margin-right: 12px; font-size: 13px; }
     .checklist-item-text { font-size: 13px; }
 
-    /* -- 进度面板四列 → 两列 -- */
-    .progress-grid-4 {
-        grid-template-columns: repeat(2, 1fr);
+    /* -- 进度面板三列 → 三列（手机端够用） -- */
+    .progress-grid-3 {
         gap: 10px;
     }
-    .progress-grid-4 > div > div:first-child { font-size: 24px !important; }
+    .progress-grid-3 > div > div:first-child { font-size: 24px !important; }
 
     /* -- 培训师监管统计四列 → 两列 -- */
     .trainee-stats-grid {

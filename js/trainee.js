@@ -535,17 +535,10 @@ const Trainee = {
     renderProgressPanel() {
         const container = document.getElementById("trainee-panel-progress");
         const trainee = DB.getTrainee(Auth.traineeName);
-        const modules = DB.getModules();
-        const progress = trainee.moduleProgress || {};
         const history = trainee.examHistory || [];
-
-        const totalMods = modules.length;
-        const doneMods = modules.filter(m => progress[m.id] === true).length;
-        const modPct = totalMods > 0 ? Math.round(doneMods / totalMods * 100) : 0;
 
         const passedExams = new Set(history.filter(r => r.score >= 60).map(r => r.examId)).size;
         const totalExams = Object.keys(DB.getExams()).length;
-        const examPct = totalExams > 0 ? Math.round(passedExams / totalExams * 100) : 0;
 
         const avgScore = history.length > 0
             ? Math.round(history.reduce((s, r) => s + r.score, 0) / history.length)
@@ -561,27 +554,13 @@ const Trainee = {
         container.innerHTML = `
             <div class="progress-section">
                 <h3>学习概览</h3>
-                <div class="progress-grid-4">
-                    <div><div style="font-size:32px;font-weight:700;color:var(--primary);">${doneMods}/${totalMods}</div><div style="font-size:13px;color:var(--text-secondary);">模块完成</div></div>
+                <div class="progress-grid-3">
                     <div><div style="font-size:32px;font-weight:700;color:var(--success);">${passedExams}/${totalExams}</div><div style="font-size:13px;color:var(--text-secondary);">考试通过</div></div>
                     <div><div style="font-size:32px;font-weight:700;color:var(--warning);">${avgScore}</div><div style="font-size:13px;color:var(--text-secondary);">平均分</div></div>
                     <div><div style="font-size:32px;font-weight:700;color:var(--success);">${clMastered}/${clTotal}</div><div style="font-size:13px;color:var(--text-secondary);">能力掌握</div></div>
                 </div>
-                <div class="progress-bar-wrap" style="margin-bottom:4px;"><div class="progress-bar-fill" style="width:${modPct}%;"></div></div>
-                <div class="progress-label">模块学习进度 ${modPct}%</div>
                 <div class="progress-bar-wrap"><div class="progress-bar-fill checklist-progress-fill" style="width:${clPct}%;"></div></div>
                 <div class="progress-label">能力清单 ${clPct}%</div>
-            </div>
-
-            <div class="progress-section">
-                <h3>模块完成情况</h3>
-                ${modules.length === 0 ? '<p class="empty-state">暂无模块</p>' : modules.map(m => {
-                    const done = progress[m.id] === true;
-                    return `<div class="card card-row">
-                        <div><strong>${m.title}</strong> ${done ? '<span class="badge badge-done">已完成</span>' : '<span class="badge badge-pending">未完成</span>'}</div>
-                        <button class="btn btn-outline btn-sm" onclick="Trainee.openStudy('${m.id}')">查看</button>
-                    </div>`;
-                }).join("")}
             </div>
 
             <div class="progress-section">

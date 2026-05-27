@@ -308,7 +308,6 @@ const Trainer = {
             return;
         }
 
-        const modules = DB.getModules();
         const exams = DB.getExams();
         const checklist = DB.getChecklist();
 
@@ -320,10 +319,8 @@ const Trainer = {
                 </div>
                 ${names.map(name => {
                     const t = trainees[name];
-                    const prog = t.moduleProgress || {};
                     const history = t.examHistory || [];
                     const clProgress = t.checklistProgress || {};
-                    const doneMods = modules.filter(m => prog[m.id] === true).length;
                     const avgScore = history.length > 0
                         ? Math.round(history.reduce((s, r) => s + r.score, 0) / history.length)
                         : 0;
@@ -337,7 +334,6 @@ const Trainer = {
                                 <button class="btn btn-danger btn-sm" onclick="Trainer.deleteTrainee('${name}')">删除</button>
                             </div>
                             <div class="trainee-stats-grid">
-                                <div><span style="font-size:20px;font-weight:700;color:var(--primary);">${doneMods}/${modules.length}</span><br><span style="font-size:12px;color:var(--text-muted);">模块完成</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${passed}/${history.length}</span><br><span style="font-size:12px;color:var(--text-muted);">考试通过</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--warning);">${avgScore}</span><br><span style="font-size:12px;color:var(--text-muted);">平均分</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${clMastered}/${checklist.length}</span><br><span style="font-size:12px;color:var(--text-muted);">能力掌握</span></div>
