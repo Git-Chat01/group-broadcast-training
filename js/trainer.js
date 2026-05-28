@@ -311,7 +311,8 @@ const Trainer = {
         const exams = DB.getExams();
         const checklist = DB.getChecklist();
 
-        // 排名数据
+        // 排名数据 + 保存快照（每天一次）
+        DB.saveRankingSnapshot();
         const rankings = DB.getRankings();
 
         container.innerHTML = `

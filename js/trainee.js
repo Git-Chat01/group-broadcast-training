@@ -553,11 +553,33 @@ const Trainee = {
 
         // 排名
         const allRankings = DB.getRankings();
-        const rankings = allRankings.filter(r => r.qualified);  // 只上榜的人参与排名
+        const rankings = allRankings.filter(r => r.qualified);
         const myData = allRankings.find(r => r.name === Auth.traineeName);
-        const myRank = rankings.findIndex(r => r.name === Auth.traineeName) + 1;  // 0 = 未上榜
+        const myRank = rankings.findIndex(r => r.name === Auth.traineeName) + 1;
         const totalQualified = rankings.length;
         const iAmQualified = myData && myData.qualified;
+
+        // 排名变化
+        let changeHTML = "";
+        if (myData && myData.prevRank !== null && myData.prevRank !== undefined) {
+            const diff = myData.prevRank - myRank;
+            if (diff > 0) changeHTML = `<span class="rank-change up">↑${diff}</span>`;
+            else if (diff < 0) changeHTML = `<span class="rank-change down">↓${Math.abs(diff)}</span>`;
+            else changeHTML = `<span class="rank-change same">→</span>`;
+        }
+
+        // 徽章
+        let badgesHTML = "";
+        if (myData && myData.badges && myData.badges.length > 0) {
+            badgesHTML = `
+            <div class="badge-row">
+                ${myData.badges.map(b => `
+                    <div class="badge-item" title="${b.name}">
+                        <span class="badge-icon">${b.icon}</span>
+                        <span class="badge-name">${b.name}</span>
+                    </div>`).join("")}
+            </div>`;
+        }
 
         let rankingHTML = "";
         if (totalQualified >= 2 || iAmQualified) {
@@ -568,14 +590,12 @@ const Trainee = {
                 ${iAmQualified ? `
                 <div class="rank-hero">
                     <span class="rank-number">#${myRank}</span>
+                    ${changeHTML}
                     <span class="rank-divider">/</span>
                     <span class="rank-total">${totalQualified}人</span>
                     <span class="rank-score">${myData.total}分</span>
-                </div>` : `
-                <div class="rank-hero">
-                    <span class="rank-number" style="font-size:22px;color:var(--text-muted);">积累中</span>
-                    <span class="rank-total" style="font-size:14px;">完成3个话术或通过1场考试后上榜</span>
-                </div>`}
+                </div>
+                ${badgesHTML}
                 <div class="rank-list">
                     ${showTop.map((r, i) => {
                         const isMe = r.name === Auth.traineeName;
@@ -593,7 +613,11 @@ const Trainee = {
                     <span class="rank-pos">${myRank}</span>
                     <span class="rank-name"><strong>我</strong></span>
                     <span class="rank-pts">${myData.total}分</span>
-                </div>` : ''}
+                </div>` : ''}` : `
+                <div class="rank-hero">
+                    <span class="rank-number" style="font-size:22px;color:var(--text-muted);">积累中</span>
+                    <span class="rank-total" style="font-size:14px;">完成3个话术或通过1场考试后上榜</span>
+                </div>`}
                 <div class="rank-hint">${iAmQualified ? '想提高排名？多完成话术场景效果最快' : '先完成3个话术场景或通过1场考试即可上榜'}</div>
             </div>`;
         }

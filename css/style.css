@@ -948,6 +948,57 @@ body {
     padding: 10px 0 0;
     opacity: 0.7;
 }
+
+/* 排名变化指示器 */
+.rank-change {
+    font-size: 14px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 2px;
+}
+.rank-change.up {
+    color: #34C759;
+    background: rgba(52,199,89,0.1);
+}
+.rank-change.down {
+    color: #FF3B30;
+    background: rgba(255,59,48,0.08);
+}
+.rank-change.same {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* 徽章 */
+.badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0 12px;
+}
+.badge-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #FFF9E6, #FFF3CC);
+    border: 1px solid rgba(200,160,50,0.2);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #8B6914;
+    white-space: nowrap;
+    cursor: default;
+    transition: transform 0.15s;
+}
+.badge-item:active {
+    transform: scale(0.96);
+}
+.badge-icon {
+    font-size: 16px;
+    line-height: 1;
+}
 .rank-trainer-table-wrap {
     overflow-x: auto;
     margin-bottom: 16px;

@@ -237,31 +237,48 @@ const DB = {
     },
 
     /** 计算所有新人的综合排名
-     *  权重：话术 50% / 考试 30% / 能力清单 20% */
+     *  话术质量权重：基础1.0 + 批注×0.2 + 版本≥2×0.05 × (版本数-1, 上限0.15) */
     getRankings() {
         const all = this.getTraineesAll();
         const templates = this.getScriptTemplates();
         const checklist = this.getChecklist();
         const exams = this.getExams();
-        const totalExams = Object.keys(exams).length;
+        const totalExamIds = Object.keys(exams).length;
+        const prevSnapshot = this._getLatestRankingSnapshot();
 
         return all.map(t => {
-            // 话术分：已完成场景数 / 总场景数 × 100
+            // 话术分 — 质量加权
             const scripts = t.scripts || {};
             let scriptDone = 0;
+            let scriptQualitySum = 0;
             templates.forEach(tmpl => {
                 const s = scripts[tmpl.id];
-                if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) scriptDone++;
+                if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) {
+                    scriptDone++;
+                    let weight = 1.0;
+                    // 培训师批注加权
+                    const activeV = s.versions ? s.versions[s.activeVersion - 1] : null;
+                    if (activeV && activeV.feedback) weight += 0.2;
+                    // 版本积累加权（版本≥2时每多一个版本+0.05，上限0.15）
+                    const vCount = s.versions ? s.versions.length : 1;
+                    if (vCount >= 2) {
+                        weight += Math.min((vCount - 1) * 0.05, 0.15);
+                    }
+                    scriptQualitySum += weight;
+                }
             });
-            const scriptScore = templates.length > 0 ? Math.round(scriptDone / templates.length * 100) : 0;
+            const scriptRaw = templates.length > 0 ? Math.round(scriptDone / templates.length * 100) : 0;
+            const scriptQuality = templates.length > 0 ? Math.round(scriptQualitySum / templates.length * 100) : 0;
+            // 话术分 = 数量分×0.4 + 质量分×0.6
+            const scriptScore = Math.round(scriptRaw * 0.4 + scriptQuality * 0.6);
 
-            // 考试分：平均分（无考试记录时为0）
+            // 考试分
             const history = t.examHistory || [];
             const examScore = history.length > 0
                 ? Math.round(history.reduce((s, r) => s + r.score, 0) / history.length)
                 : 0;
 
-            // 能力分：已掌握数 / 总项数 × 100
+            // 能力分
             const cp = t.checklistProgress || {};
             const clMastered = checklist.filter(c => cp[c.id] === "mastered").length;
             const clScore = checklist.length > 0 ? Math.round(clMastered / checklist.length * 100) : 0;
@@ -269,9 +286,24 @@ const DB = {
             // 综合分
             const total = Math.round(scriptScore * 0.5 + examScore * 0.3 + clScore * 0.2);
 
-            // 上榜门槛：完成≥3个话术场景 或 通过≥1场考试
+            // 上榜门槛
             const examPassed = history.filter(r => r.score >= 60).length;
             const qualified = scriptDone >= 3 || examPassed >= 1;
+
+            // 排名变化（对比上次快照）
+            const prev = prevSnapshot ? prevSnapshot.rankings.find(r => r.name === t.name) : null;
+            const prevRank = prev ? prev.rank : null;
+            const prevTotal = prev ? prev.total : null;
+
+            // 徽章
+            const badges = [];
+            if (scriptDone >= templates.length && templates.length > 0) badges.push({ id: "script-master", name: "话术全通", icon: "📝" });
+            if (examPassed >= totalExamIds && totalExamIds > 0) badges.push({ id: "exam-ace", name: "学霸", icon: "🎓" });
+            if (clMastered >= checklist.length && checklist.length > 0) badges.push({ id: "hardware-pro", name: "硬件达人", icon: "🔧" });
+            if (scriptDone >= 8) badges.push({ id: "script-lv2", name: "话术达人 Lv.2", icon: "💬" });
+            else if (scriptDone >= 3) badges.push({ id: "script-lv1", name: "话术达人 Lv.1", icon: "💬" });
+            if (clMastered >= 25) badges.push({ id: "hardware-lv2", name: "设备能手 Lv.2", icon: "⚡" });
+            else if (clMastered >= 12) badges.push({ id: "hardware-lv1", name: "设备能手 Lv.1", icon: "⚡" });
 
             return {
                 name: t.name,
@@ -280,18 +312,51 @@ const DB = {
                 scriptScore,
                 scriptDone,
                 scriptTotal: templates.length,
+                scriptRaw,
+                scriptQuality,
                 examScore,
                 examPassed,
-                examTotal: totalExams,
+                examTotal: totalExamIds,
                 clScore,
                 clMastered,
-                clTotal: checklist.length
+                clTotal: checklist.length,
+                prevRank,
+                prevTotal,
+                badges
             };
         }).sort((a, b) => {
-            // 上榜的排前面按分数降序，未上榜的排后面按活跃度降序
             if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
             return b.total - a.total;
         });
+    },
+
+    /** 保存排名快照（用于计算排名变化） */
+    saveRankingSnapshot() {
+        const rankings = this.getRankings();
+        const qualified = rankings.filter(r => r.qualified);
+        // 只保存上榜的人 + 排名
+        const snapshot = {
+            date: new Date().toISOString().slice(0, 10),
+            rankings: qualified.map((r, i) => ({ name: r.name, rank: i + 1, total: r.total }))
+        };
+        const history = this._getRankingHistory();
+        // 同一天只保留最新一份
+        const existing = history.findIndex(h => h.date === snapshot.date);
+        if (existing >= 0) history[existing] = snapshot;
+        else history.push(snapshot);
+        // 只保留最近 30 条
+        if (history.length > 30) history.shift();
+        localStorage.setItem("rankingHistory", JSON.stringify(history));
+    },
+
+    _getRankingHistory() {
+        try { return JSON.parse(localStorage.getItem("rankingHistory")) || []; }
+        catch (e) { return []; }
+    },
+
+    _getLatestRankingSnapshot() {
+        const history = this._getRankingHistory();
+        return history.length > 0 ? history[history.length - 1] : null;
     },
 
     /** 获取或创建新人记录 */
