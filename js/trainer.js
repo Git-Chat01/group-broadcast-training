@@ -326,6 +326,14 @@ const Trainer = {
                         : 0;
                     const passed = history.filter(r => r.score >= 60).length;
                     const clMastered = checklist.filter(c => clProgress[c.id] === "mastered").length;
+                    const templates = DB.getScriptTemplates();
+                    const scripts = DB.getScripts(name);
+                    let scriptWritten = 0, scriptPending = 0;
+                    templates.forEach(t => {
+                        const s = scripts[t.id];
+                        if (s && s.status === "submitted") scriptPending++;
+                        if (s && s.status !== "draft" && s.versions.length > 0) scriptWritten++;
+                    });
 
                     return `
                         <div class="card">
@@ -337,6 +345,9 @@ const Trainer = {
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${passed}/${history.length}</span><br><span style="font-size:12px;color:var(--text-muted);">考试通过</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--warning);">${avgScore}</span><br><span style="font-size:12px;color:var(--text-muted);">平均分</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${clMastered}/${checklist.length}</span><br><span style="font-size:12px;color:var(--text-muted);">能力掌握</span></div>
+                            </div>
+                            <div class="trainer-script-stats" onclick="Trainer.viewTraineeScripts('${name}')">
+                                话术进度：${scriptWritten}/${templates.length} 已写${scriptPending > 0 ? ' · ' + scriptPending + ' 个待批注' : ''}
                             </div>
                             ${history.length > 0 ? `
                                 <table class="data-table" style="margin-top:12px;">
@@ -356,6 +367,127 @@ const Trainer = {
         if (!confirm(`确定要删除新人「${name}」的所有数据吗？此操作不可恢复。`)) return;
         DB.deleteTrainee(name);
         this.renderMonitorPanel();
+    },
+
+    // ==================== 话术监管与批注 ====================
+
+    /** 查看某新人的话术列表 */
+    viewTraineeScripts(name) {
+        const container = document.getElementById("trainer-panel-monitor");
+        const templates = DB.getScriptTemplates();
+        const scripts = DB.getScripts(name);
+
+        const groups = new Map();
+        templates.forEach(t => {
+            if (!groups.has(t.category)) groups.set(t.category, []);
+            groups.get(t.category).push(t);
+        });
+
+        let catsHTML = "";
+        let first = true;
+        groups.forEach((items, catName) => {
+            const catId = "tsc-" + catName.replace(/[^a-zA-Z0-9一-龥]/g, "");
+            catsHTML += `
+                <div class="script-category">
+                    <div class="script-cat-header" onclick="Trainee.toggleCategory('${catId}')">
+                        <span class="script-cat-arrow" id="${catId}-arrow">${first ? "▼" : "▶"}</span>
+                        <span class="script-cat-name">${catName}</span>
+                    </div>
+                    <div class="script-cat-body" id="${catId}-body" style="${first ? "" : "display:none;"}">
+                        ${items.map(t => {
+                            const s = scripts[t.id];
+                            let st = "unwritten";
+                            if (s) {
+                                if (s.status === "submitted") st = "submitted";
+                                else if (s.status === "reviewed") st = "reviewed";
+                                else if (s.versions.length > 0) st = "draft";
+                            }
+                            const icons = { unwritten: "○", draft: "◐", submitted: "⚠", reviewed: "✓" };
+                            const iconColors = { unwritten: "var(--danger)", draft: "var(--warning)", submitted: "#FF9500", reviewed: "var(--success)" };
+                            return `
+                                <div class="script-item" onclick="Trainer.openScriptFeedback('${name}', '${t.id}')">
+                                    <span class="script-item-icon" style="color:${iconColors[st]};">${icons[st]}</span>
+                                    <span class="script-item-text">${t.scene}</span>
+                                    ${st === "submitted" ? '<span class="script-item-badge feedback">待批注</span>' : ''}
+                                </div>`;
+                        }).join("")}
+                    </div>
+                </div>`;
+            first = false;
+        });
+
+        container.innerHTML = `
+            <div style="padding:16px;">
+                <button class="btn btn-ghost btn-sm" onclick="Trainer.renderMonitorPanel()">← 返回监管列表</button>
+                <h3 style="margin:12px 0;">${name} 的话术练习</h3>
+                ${catsHTML}
+            </div>
+        `;
+    },
+
+    /** 打开批注页面 */
+    openScriptFeedback(name, templateId) {
+        const container = document.getElementById("trainer-panel-monitor");
+        const templates = DB.getScriptTemplates();
+        const template = templates.find(t => t.id === templateId);
+        if (!template) return;
+
+        const scripts = DB.getScripts(name);
+        const sc = scripts[templateId];
+        const activeV = sc ? sc.activeVersion : 0;
+        const currentVer = sc && activeV > 0 ? sc.versions.find(v => v.version === activeV) : null;
+        const currentContent = currentVer ? currentVer.content : "（该场景尚未提交）";
+        const currentFeedback = currentVer ? currentVer.feedback : null;
+
+        let feedbackHTML = "";
+        if (currentFeedback) {
+            feedbackHTML = `
+                <div class="feedback-block">
+                    <div class="feedback-block-label">我之前的批注（版本 ${activeV}）</div>
+                    <div class="feedback-block-text">${Trainer.escHtml(currentFeedback.text)}</div>
+                    <div class="feedback-block-meta">${currentFeedback.createdAt}</div>
+                </div>`;
+        }
+
+        container.innerHTML = `
+            <div class="script-detail">
+                <div class="script-detail-header">
+                    <button class="script-detail-back" onclick="Trainer.viewTraineeScripts('${name}')">←</button>
+                    <span class="script-detail-title">${template.scene} — ${name}</span>
+                </div>
+
+                <div class="script-section goal">
+                    <div class="script-section-label">📍 模板目的</div>
+                    <div class="script-section-text">${Trainer.escHtml(template.goal)}</div>
+                </div>
+
+                <div class="script-section">
+                    <div class="script-section-label">✏️ ${name} 的版本（版本 ${activeV}）</div>
+                    <div class="script-section-text" style="white-space:pre-wrap;background:var(--bg-secondary);padding:14px;border-radius:10px;font-size:14px;line-height:1.6;">
+                        ${Trainer.escHtml(currentContent)}
+                    </div>
+                </div>
+
+                ${feedbackHTML}
+
+                <div class="script-section">
+                    <div class="script-section-label">📝 ${currentFeedback ? '修改批注' : '添加批注'}</div>
+                    <textarea class="script-trainer-feedback-input" id="trainerFeedbackInput" placeholder="给出具体的修改建议...">${currentFeedback ? Trainer.escHtml(currentFeedback.text) : ''}</textarea>
+                    <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="Trainer.submitFeedback('${name}', '${templateId}', ${activeV})">
+                        ${currentFeedback ? '更新批注' : '提交批注'}
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    /** 提交批注 */
+    submitFeedback(name, templateId, versionNum) {
+        const text = document.getElementById("trainerFeedbackInput").value.trim();
+        if (!text) { alert("请填写批注内容"); return; }
+        DB.addScriptFeedback(name, templateId, versionNum, text);
+        alert("批注已提交！新人下次打开话术就能看到～");
+        this.openScriptFeedback(name, templateId);
     },
 
     // ===== CSV 导出 =====

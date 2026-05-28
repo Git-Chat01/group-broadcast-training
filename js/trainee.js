@@ -607,5 +607,295 @@ const Trainee = {
             html += `</div>`;
         });
         return html;
-    }
+    },
+
+    // ==================== 话术练习 ====================
+
+    /** 当前正在查看的话术场景ID */
+    currentScriptId: null,
+
+    /** 渲染话术场景列表 */
+    renderScriptPanel() {
+        const container = document.getElementById("trainee-panel-script");
+        const templates = DB.getScriptTemplates();
+        const scripts = DB.getScripts(Auth.traineeName);
+
+        if (templates.length === 0) {
+            container.innerHTML = '<p class="empty-state">暂无话术模板，请联系培训师添加</p>';
+            return;
+        }
+
+        // 按分类分组
+        const groups = new Map();
+        templates.forEach(t => {
+            if (!groups.has(t.category)) groups.set(t.category, []);
+            groups.get(t.category).push(t);
+        });
+
+        // 统计
+        let totalWritten = 0, totalReviewed = 0;
+        templates.forEach(t => {
+            const s = scripts[t.id];
+            if (s && s.status !== "draft" && s.versions.length > 0) totalWritten++;
+            if (s && s.status === "reviewed") totalReviewed++;
+        });
+
+        const iconMap = {
+            unwritten: '<span class="script-item-icon unwritten">○</span>',
+            draft: '<span class="script-item-icon draft">◐</span>',
+            written: '<span class="script-item-icon written">✓</span>',
+            reviewed: '<span class="script-item-icon reviewed">🔴</span>'
+        };
+
+        let catsHTML = "";
+        let first = true;
+        groups.forEach((items, catName) => {
+            const catWritten = items.filter(t => {
+                const s = scripts[t.id];
+                return s && s.status !== "draft" && s.versions.length > 0;
+            }).length;
+            const catColor = catWritten === items.length ? "var(--success)"
+                : (catWritten === 0 ? "var(--text-muted)" : "var(--warning)");
+            const catId = "sc-" + catName.replace(/[^a-zA-Z0-9一-龥]/g, "");
+
+            catsHTML += `
+                <div class="script-category">
+                    <div class="script-cat-header" onclick="Trainee.toggleCategory('${catId}')">
+                        <span class="script-cat-arrow" id="${catId}-arrow">${first ? "▼" : "▶"}</span>
+                        <span class="script-cat-name">${catName}</span>
+                        <span class="script-cat-count" style="color:${catColor};">${catWritten}/${items.length}</span>
+                    </div>
+                    <div class="script-cat-body" id="${catId}-body" style="${first ? "" : "display:none;"}">
+                        ${items.map(t => {
+                            const s = scripts[t.id];
+                            let status = "unwritten";
+                            if (s) {
+                                if (s.status === "reviewed") status = "reviewed";
+                                else if (s.status === "submitted") status = "written";
+                                else if (s.status === "draft" && s.versions.length > 0) status = "draft";
+                            }
+                            let badgeHTML = "";
+                            const activeVer = s ? s.versions[s.activeVersion - 1] : null;
+                            if (s && s.status === "reviewed" && activeVer && activeVer.feedback) {
+                                badgeHTML = '<span class="script-item-badge feedback">有批注</span>';
+                            }
+                            return `
+                                <div class="script-item" onclick="Trainee.openScriptScene('${t.id}')">
+                                    ${iconMap[status]}
+                                    <span class="script-item-text">${t.scene}</span>
+                                    ${badgeHTML}
+                                </div>`;
+                        }).join("")}
+                    </div>
+                </div>`;
+            first = false;
+        });
+
+        container.innerHTML = `
+            <div class="script-summary">
+                <span>已完成 <strong>${totalWritten}</strong> / ${templates.length}</span>
+                <span>培训师已批 <strong>${totalReviewed}</strong> 个</span>
+            </div>
+            ${catsHTML}
+        `;
+    },
+
+    /** 打开话术场景详情 */
+    openScriptScene(templateId) {
+        const templates = DB.getScriptTemplates();
+        const template = templates.find(t => t.id === templateId);
+        if (!template) return;
+
+        this.currentScriptId = templateId;
+        const scripts = DB.getScripts(Auth.traineeName);
+        const sc = scripts[templateId];
+        const activeV = sc ? sc.activeVersion : 0;
+        const currentContent = sc && activeV > 0
+            ? (sc.versions.find(v => v.version === activeV) || {}).content || ""
+            : "";
+        const currentFeedback = sc && activeV > 0
+            ? (sc.versions.find(v => v.version === activeV) || {}).feedback
+            : null;
+
+        // 版本选项
+        let versionOptions = '<option value="0">新建</option>';
+        if (sc) {
+            sc.versions.forEach(v => {
+                const sel = v.version === activeV ? " selected" : "";
+                versionOptions += '<option value="' + v.version + '"' + sel + '>版本 ' + v.version + '</option>';
+            });
+        }
+
+        // 示范话术
+        const examplesHTML = (template.examples || []).length > 0
+            ? template.examples.map((ex) => `
+                <div class="script-example-card">${this.escapeHtml(ex)}</div>
+            `).join("")
+            : '<div class="script-example-card" style="color:var(--text-muted);">暂无示范</div>';
+
+        const dotsHTML = (template.examples || []).map((_, i) => `
+            <span class="script-example-dot ${i === 0 ? 'active' : ''}" data-dot="${i}"></span>
+        `).join("");
+
+        // 关键技巧
+        const tipsHTML = (template.tips || []).length > 0
+            ? '<ul>' + template.tips.map(tip => '<li>' + this.escapeHtml(tip) + '</li>').join("") + '</ul>'
+            : '<p style="color:var(--text-muted);">暂无技巧</p>';
+
+        // 批注
+        let feedbackHTML = "";
+        if (currentFeedback) {
+            feedbackHTML = `
+                <div class="feedback-block">
+                    <div class="feedback-block-label">📝 培训师批注（版本 ${activeV}）</div>
+                    <div class="feedback-block-text">${this.escapeHtml(currentFeedback.text)}</div>
+                    <div class="feedback-block-meta">${currentFeedback.trainer} · ${currentFeedback.createdAt}</div>
+                </div>`;
+        }
+
+        const container = document.getElementById("trainee-panel-script");
+        container.innerHTML = `
+            <div class="script-detail">
+                <div class="script-detail-header">
+                    <button class="script-detail-back" onclick="Trainee.renderScriptPanel()" aria-label="返回">←</button>
+                    <span class="script-detail-title">${template.scene}</span>
+                    <select class="script-version-select" id="scriptVersionSelect" onchange="Trainee.switchScriptVersion('${templateId}', this.value)">
+                        ${versionOptions}
+                    </select>
+                </div>
+
+                <div class="script-section goal">
+                    <div class="script-section-label">📍 目的</div>
+                    <div class="script-section-text">${this.escapeHtml(template.goal)}</div>
+                </div>
+
+                <div class="script-section logic">
+                    <div class="script-section-label">🧠 逻辑思维</div>
+                    <div class="script-section-text">${this.escapeHtml(template.logic)}</div>
+                </div>
+
+                <div class="script-section">
+                    <div class="script-section-label">💬 示范话术</div>
+                    <div class="script-examples-wrapper">
+                        <div class="script-examples-track" id="scriptExamplesTrack">
+                            ${examplesHTML}
+                        </div>
+                    </div>
+                    ${(template.examples || []).length > 1 ? `
+                    <div class="script-example-nav">
+                        <button id="btnExPrev" disabled onclick="Trainee.slideExample(-1)">‹</button>
+                        <span class="script-example-dots">${dotsHTML}</span>
+                        <button id="btnExNext" onclick="Trainee.slideExample(1)">›</button>
+                    </div>` : ""}
+                </div>
+
+                <div class="script-section tips">
+                    <div class="script-section-label">💡 关键技巧</div>
+                    ${tipsHTML}
+                </div>
+
+                ${feedbackHTML}
+            </div>
+
+            <div class="script-input-bar">
+                <textarea id="scriptContentInput" placeholder="在这里写你自己的话术版本...">${this.escapeHtml(currentContent)}</textarea>
+                <div class="script-input-actions">
+                    <button class="btn-script-draft" onclick="Trainee.saveScriptDraft()">保存草稿</button>
+                    <button class="btn-script-read" onclick="Trainee.openReadMode()">试读</button>
+                    <button class="btn-script-submit" onclick="Trainee.submitScript()">提交</button>
+                </div>
+            </div>
+        `;
+
+        // 初始化示范话术当前索引
+        this._exampleIndex = 0;
+    },
+
+    /** 示范话术当前索引 */
+    _exampleIndex: 0,
+
+    /** 示范话术左右滑动 */
+    slideExample(dir) {
+        const templates = DB.getScriptTemplates();
+        const template = templates.find(t => t.id === this.currentScriptId);
+        if (!template) return;
+        const total = (template.examples || []).length;
+        if (total <= 1) return;
+
+        this._exampleIndex += dir;
+        if (this._exampleIndex < 0) this._exampleIndex = 0;
+        if (this._exampleIndex >= total) this._exampleIndex = total - 1;
+
+        const track = document.getElementById("scriptExamplesTrack");
+        if (track) {
+            track.style.transform = 'translateX(-' + (this._exampleIndex * 100) + '%)';
+        }
+        // 更新按钮状态
+        const prevBtn = document.getElementById("btnExPrev");
+        const nextBtn = document.getElementById("btnExNext");
+        if (prevBtn) prevBtn.disabled = this._exampleIndex === 0;
+        if (nextBtn) nextBtn.disabled = this._exampleIndex === total - 1;
+        // 更新圆点
+        document.querySelectorAll(".script-example-dot").forEach((d, i) => {
+            d.classList.toggle("active", i === this._exampleIndex);
+        });
+    },
+
+    /** 保存草稿 */
+    saveScriptDraft() {
+        const content = document.getElementById("scriptContentInput").value.trim();
+        if (!content) { alert("请先写点内容再保存"); return; }
+        DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+        // 绿色闪烁反馈
+        const textarea = document.getElementById("scriptContentInput");
+        const origBg = textarea.style.background;
+        textarea.style.background = "#E8F5E9";
+        setTimeout(() => { textarea.style.background = origBg; }, 300);
+        // 回到列表刷新状态
+        setTimeout(() => this.renderScriptPanel(), 500);
+    },
+
+    /** 提交给培训师 */
+    submitScript() {
+        const content = document.getElementById("scriptContentInput").value.trim();
+        if (!content) { alert("请先写内容再提交"); return; }
+
+        DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+        DB.submitScript(Auth.traineeName, this.currentScriptId);
+        alert("已提交给培训师，等待批注～");
+        this.renderScriptPanel();
+    },
+
+    /** 切换版本 */
+    switchScriptVersion(templateId, versionNum) {
+        const vn = parseInt(versionNum);
+        if (vn === 0) {
+            // 新建版本：清空输入框
+            document.getElementById("scriptContentInput").value = "";
+            document.getElementById("scriptVersionSelect").value = "0";
+        } else {
+            DB.setActiveScriptVersion(Auth.traineeName, templateId, vn);
+            this.openScriptScene(templateId);
+        }
+    },
+
+    /** 打开试读模式 */
+    openReadMode() {
+        const content = document.getElementById("scriptContentInput").value.trim();
+        if (!content) { alert("还没有写内容，先写点东西再试读吧"); return; }
+
+        const overlay = document.createElement("div");
+        overlay.className = "read-mode-overlay";
+        overlay.id = "readModeOverlay";
+        overlay.innerHTML = `
+            <div class="read-mode-content">
+                <div class="read-mode-text">${this.escapeHtml(content).replace(/\n/g, "<br>")}</div>
+            </div>
+            <button class="read-mode-close" onclick="document.getElementById('readModeOverlay').remove()">关闭</button>
+        `;
+        overlay.addEventListener("click", function(e) {
+            if (e.target === this) this.remove();
+        });
+        document.body.appendChild(overlay);
+    },
 };

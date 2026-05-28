@@ -19,6 +19,7 @@ const DB = {
             localStorage.setItem("modules", JSON.stringify(defaults.modules || []));
             localStorage.setItem("exams", JSON.stringify(defaults.exams || {}));
             localStorage.setItem("checklist", JSON.stringify(defaults.checklist || []));
+            localStorage.setItem("scriptTemplates", JSON.stringify(defaults.scriptTemplates || []));
             localStorage.setItem("trainees", JSON.stringify(defaults.trainees || {}));
             localStorage.setItem("dataVersion", codeVersion);
             return;
@@ -31,6 +32,7 @@ const DB = {
         this._mergeModules(defaults.modules || []);
         this._mergeExams(defaults.exams || {});
         this._mergeChecklist(defaults.checklist || []);
+        this._mergeScriptTemplates(defaults.scriptTemplates || []);
         // adminPassword 和 trainees 始终保留用户数据，不覆盖
         localStorage.setItem("dataVersion", codeVersion);
     },
@@ -117,6 +119,35 @@ const DB = {
         });
 
         if (changed) this.saveChecklist(existing);
+    },
+
+    /**
+     * 智能合并话术模板：
+     * - 新模板（ID 不存在）→ 自动添加
+     * - 已有模板 → 用默认数据更新所有字段
+     */
+    _mergeScriptTemplates(defaultTemplates) {
+        const existing = this.getScriptTemplates();
+        const existingMap = new Map(existing.map(m => [m.id, m]));
+        let changed = false;
+
+        defaultTemplates.forEach(dt => {
+            const old = existingMap.get(dt.id);
+            if (!old) {
+                existing.push(dt);
+                changed = true;
+            } else {
+                old.category = dt.category;
+                old.scene = dt.scene;
+                old.goal = dt.goal;
+                old.logic = dt.logic;
+                old.examples = dt.examples;
+                old.tips = dt.tips;
+                changed = true;
+            }
+        });
+
+        if (changed) this.saveScriptTemplates(existing);
     },
 
     // ===== 管理密码 =====
@@ -230,6 +261,113 @@ const DB = {
     getChecklistProgress(name) {
         const t = this.getTrainee(name);
         return t.checklistProgress || {};
+    },
+
+    // ===== 话术模板 =====
+    getScriptTemplates() {
+        try { return JSON.parse(localStorage.getItem("scriptTemplates")) || []; }
+        catch (e) { return []; }
+    },
+    saveScriptTemplates(templates) {
+        localStorage.setItem("scriptTemplates", JSON.stringify(templates));
+    },
+
+    // ===== 新人话术版本 =====
+
+    /** 获取新人所有话术数据 */
+    getScripts(name) {
+        const t = this.getTrainee(name);
+        return t.scripts || {};
+    },
+
+    /** 保存新版本（每次保存递增版本号，新建副本） */
+    saveScriptVersion(name, templateId, content, status) {
+        const trainees = this.getTrainees();
+        if (!trainees[name]) trainees[name] = { moduleProgress: {}, examHistory: [], checklistProgress: {} };
+        if (!trainees[name].scripts) trainees[name].scripts = {};
+
+        const sc = trainees[name].scripts[templateId] || { versions: [], activeVersion: 0 };
+        const newVersion = sc.versions.length + 1;
+
+        sc.versions.push({
+            version: newVersion,
+            content: content,
+            createdAt: new Date().toLocaleString("zh-CN"),
+            feedback: null
+        });
+        sc.activeVersion = newVersion;
+        sc.status = status || "draft";
+
+        trainees[name].scripts[templateId] = sc;
+        this.saveTrainees(trainees);
+        return newVersion;
+    },
+
+    /** 更新草稿（不创建新版本，直接修改当前激活版本的内容） */
+    saveScriptDraft(name, templateId, content) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+
+        const sc = trainees[name].scripts[templateId];
+        if (!sc) return;
+
+        const active = sc.versions.find(v => v.version === sc.activeVersion);
+        if (active && active.feedback === null) {
+            active.content = content;
+            active.createdAt = new Date().toLocaleString("zh-CN");
+            sc.status = "draft";
+        } else {
+            const newVersion = sc.versions.length + 1;
+            sc.versions.push({
+                version: newVersion,
+                content: content,
+                createdAt: new Date().toLocaleString("zh-CN"),
+                feedback: null
+            });
+            sc.activeVersion = newVersion;
+            sc.status = "draft";
+        }
+        this.saveTrainees(trainees);
+    },
+
+    /** 提交给培训师 */
+    submitScript(name, templateId) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+        const sc = trainees[name].scripts[templateId];
+        if (sc) {
+            sc.status = "submitted";
+            this.saveTrainees(trainees);
+        }
+    },
+
+    /** 切换激活版本 */
+    setActiveScriptVersion(name, templateId, versionNum) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+        const sc = trainees[name].scripts[templateId];
+        if (sc && sc.versions.find(v => v.version === versionNum)) {
+            sc.activeVersion = versionNum;
+            this.saveTrainees(trainees);
+        }
+    },
+
+    /** 培训师添加批注 */
+    addScriptFeedback(name, templateId, versionNum, feedbackText) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+        const sc = trainees[name].scripts[templateId];
+        if (!sc) return;
+        const ver = sc.versions.find(v => v.version === versionNum);
+        if (ver) {
+            ver.feedback = {
+                trainer: "培训师",
+                text: feedbackText,
+                createdAt: new Date().toLocaleString("zh-CN")
+            };
+            sc.status = "reviewed";
+            this.saveTrainees(trainees);
+        }
     },
 
     /** 添加考试记录 */

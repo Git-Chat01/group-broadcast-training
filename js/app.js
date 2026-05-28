@@ -146,6 +146,7 @@ const App = {
         // 渲染对应内容
         if (tabName === "study") Trainee.renderStudyPanel();
         if (tabName === "exam") Trainee.renderExamPanel();
+        if (tabName === "script") Trainee.renderScriptPanel();
         if (tabName === "progress") Trainee.renderProgressPanel();
     },
 
