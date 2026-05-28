@@ -1014,16 +1014,16 @@ body {
 
 /* --- 场景详情页 --- */
 .script-detail {
-    padding-bottom: 200px; /* 给底部固定栏留空间 */
-    background: var(--bg-primary, #f5f5f7);
+    padding-bottom: 200px;
+    background: #F8F8FA;
 }
 .script-detail-header {
     display: flex;
     align-items: center;
     padding: 12px 16px;
     gap: 12px;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
+    background: #fff;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
     position: sticky;
     top: 0;
     z-index: 5;
@@ -1033,7 +1033,7 @@ body {
     height: 36px;
     border-radius: 50%;
     border: none;
-    background: var(--bg-secondary);
+    background: #F2F2F7;
     font-size: 18px;
     cursor: pointer;
     display: flex;
@@ -1043,7 +1043,7 @@ body {
     color: var(--text-primary);
 }
 .script-detail-back:active {
-    background: var(--border);
+    background: #E5E5EA;
 }
 .script-detail-title {
     flex: 1;
@@ -1059,24 +1059,19 @@ body {
     padding: 5px 10px;
     border-radius: 6px;
     border: 1px solid var(--border);
-    background: var(--bg-card);
+    background: #fff;
     color: var(--text-primary);
     flex-shrink: 0;
     max-width: 100px;
     font-weight: 500;
 }
 
-/* 详情区块 — 统一间距 */
+/* 区块共用样式 */
 .script-section {
     padding: 18px 16px;
     margin: 0;
-    border-bottom: none;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
 }
-.script-section + .script-section {
-    border-top: 1px solid rgba(0,0,0,0.05);
-}
-
-/* 区块标题 — 清晰的视觉层级 */
 .script-section-label {
     font-size: 14px;
     font-weight: 700;
@@ -1086,18 +1081,21 @@ body {
     text-transform: none;
 }
 
-/* 目的区块 — 突出卡片 */
+/* 目的区块 — 微妙区分 */
 .script-section.goal {
-    background: linear-gradient(135deg, #EEF2FF 0%, #E8EDFF 100%);
+    background: #fff;
     margin: 12px 12px 0 12px;
     border-radius: 14px;
     border: none;
     padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 .script-section.goal .script-section-label {
-    font-size: 13px;
-    color: #5B6ABF;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8E8E98;
     margin-bottom: 6px;
+    letter-spacing: 0.02em;
 }
 .script-section.goal .script-section-text {
     font-size: 15px;
@@ -1106,20 +1104,14 @@ body {
     line-height: 1.6;
 }
 
-/* 逻辑思维区块 — 舒适阅读 */
+/* 逻辑思维区块 */
 .script-section.logic {
     padding: 18px 16px;
 }
-.script-section.logic .script-section-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
 .script-section.logic .script-section-text {
     font-size: 14px;
-    color: var(--text-secondary);
+    color: #5C5C6E;
     line-height: 1.85;
-    letter-spacing: 0.01em;
 }
 
 /* 示范话术区块 */
