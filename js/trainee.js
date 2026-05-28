@@ -582,10 +582,13 @@ const Trainee = {
         }
 
         let rankingHTML = "";
-        // 始终显示排名区块
         if (totalQualified >= 1) {
-            // 有人上榜 → 显示排名
             const showTop = rankings.slice(0, 5);
+            let hint = "";
+            if (iAmQualified && totalQualified >= 2) hint = "多完成话术场景提升最快";
+            else if (iAmQualified) hint = "等更多新人加入后开启竞争";
+            else hint = `完成 3 个话术或通过 1 场考试即可上榜${totalQualified > 0 ? ' · 已有 ' + totalQualified + ' 人上榜' : ''}`;
+
             rankingHTML = `
             <div class="progress-section">
                 <h3>🏆 综合排名</h3>
@@ -617,27 +620,21 @@ const Trainee = {
                     <span class="rank-name"><strong>我</strong></span>
                     <span class="rank-pts">${myData.total}分</span>
                 </div>` : ''}
-                ` : `<p class="empty-state" style="padding:8px 0;">目前仅你一人上榜，等更多新人加入后开启竞争排名</p>`}
-                <div class="rank-hint">想提高排名？多完成话术场景效果最快</div>` : `
+                ` : ''}
+                ` : `
                 <div class="rank-hero">
                     <span class="rank-number" style="font-size:22px;color:var(--text-muted);">积累中</span>
-                    <span class="rank-total" style="font-size:14px;">完成3个话术或通过1场考试后上榜</span>
-                </div>
-                ${totalQualified > 0 ? `
-                <p class="empty-state" style="padding:8px 0;">已有 ${totalQualified} 人上榜，加油追上他们～</p>` : ''}
-                <div class="rank-hint">先完成3个话术场景或通过1场考试即可上榜</div>`}
+                </div>`}
+                <div class="rank-hint">${hint}</div>
             </div>`;
         } else {
-            // 完全没人上榜 + 当前用户也不达标
             rankingHTML = `
             <div class="progress-section">
                 <h3>🏆 综合排名</h3>
                 <div class="rank-hero">
                     <span class="rank-number" style="font-size:22px;color:var(--text-muted);">积累中</span>
-                    <span class="rank-total" style="font-size:14px;">完成3个话术或通过1场考试后上榜</span>
                 </div>
-                <p class="empty-state" style="padding:8px 0;">还没有人上榜，快来成为第一个上榜的新人吧～</p>
-                <div class="rank-hint">先完成3个话术场景或通过1场考试即可上榜</div>
+                <div class="rank-hint">完成 3 个话术或通过 1 场考试即可上榜</div>
             </div>`;
         }
 
