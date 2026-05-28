@@ -1213,32 +1213,19 @@ body {
     text-transform: none;
 }
 
-/* 目的区块 — 微妙区分 */
+/* 目的区块 */
 .script-section.goal {
     background: #fff;
-    margin: 12px 12px 0 12px;
-    border-radius: 14px;
-    border: none;
-    padding: 18px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-}
-.script-section.goal .script-section-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #8E8E98;
-    margin-bottom: 6px;
-    letter-spacing: 0.02em;
 }
 .script-section.goal .script-section-text {
     font-size: 15px;
-    font-weight: 500;
     color: #1C1C2E;
     line-height: 1.6;
 }
 
 /* 逻辑思维区块 */
 .script-section.logic {
-    padding: 18px 16px;
+    background: #fff;
 }
 .script-section.logic .script-section-text {
     font-size: 14px;
@@ -1246,14 +1233,9 @@ body {
     line-height: 1.85;
 }
 
-/* 示范话术区块 */
-.script-section:not(.goal):not(.logic):not(.tips) {
-    padding: 18px 16px 14px;
-}
-.script-section:not(.goal):not(.logic):not(.tips) .script-section-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
+/* 示范话术 & 关键技巧区块 */
+.script-section:not(.goal):not(.logic) {
+    background: #fff;
 }
 
 /* 示范话术滑动区 */
