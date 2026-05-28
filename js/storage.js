@@ -379,6 +379,26 @@ const DB = {
         }
     },
 
+    /** 删除某新人的话术数据（保留考试记录和能力清单） */
+    deleteTraineeScripts(name) {
+        const trainees = this.getTrainees();
+        if (trainees[name] && trainees[name].scripts) {
+            delete trainees[name].scripts;
+            this.saveTrainees(trainees);
+        }
+    },
+
+    /** 清空所有新人的话术数据 */
+    clearAllScripts() {
+        const trainees = this.getTrainees();
+        Object.keys(trainees).forEach(name => {
+            if (trainees[name].scripts) {
+                delete trainees[name].scripts;
+            }
+        });
+        this.saveTrainees(trainees);
+    },
+
     /** 培训师添加批注 */
     addScriptFeedback(name, templateId, versionNum, feedbackText) {
         const trainees = this.getTrainees();

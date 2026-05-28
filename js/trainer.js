@@ -315,7 +315,10 @@ const Trainer = {
             <div class="progress-section">
                 <div class="card-row" style="margin-bottom:12px;">
                     <h3>新人总览（${names.length}人）</h3>
-                    <button class="btn btn-outline btn-sm" onclick="Trainer.exportCSV()">导出 CSV</button>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn btn-outline btn-sm" onclick="Trainer.showDataMgmt()">数据管理</button>
+                        <button class="btn btn-outline btn-sm" onclick="Trainer.exportCSV()">导出 CSV</button>
+                    </div>
                 </div>
                 ${names.map(name => {
                     const t = trainees[name];
@@ -346,8 +349,11 @@ const Trainer = {
                                 <div><span style="font-size:20px;font-weight:700;color:var(--warning);">${avgScore}</span><br><span style="font-size:12px;color:var(--text-muted);">平均分</span></div>
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${clMastered}/${checklist.length}</span><br><span style="font-size:12px;color:var(--text-muted);">能力掌握</span></div>
                             </div>
-                            <div class="trainer-script-stats" onclick="Trainer.viewTraineeScripts('${name}')">
-                                话术进度：${scriptWritten}/${templates.length} 已写${scriptPending > 0 ? ' · ' + scriptPending + ' 个待批注' : ''}
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <div class="trainer-script-stats" onclick="Trainer.viewTraineeScripts('${name}')" style="margin-top:0;">
+                                    话术进度：${scriptWritten}/${templates.length} 已写${scriptPending > 0 ? ' · ' + scriptPending + ' 个待批注' : ''}
+                                </div>
+                                ${Object.keys(scripts).length > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;padding:4px 10px;" onclick="event.stopPropagation();Trainer.deleteTraineeScripts('${name}')">清除话术</button>` : ''}
                             </div>
                             ${history.length > 0 ? `
                                 <table class="data-table" style="margin-top:12px;">
@@ -546,6 +552,81 @@ const Trainer = {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    },
+
+    // ===== 数据管理 =====
+
+    /** 删除某新人的话术数据（保留考试记录和能力清单） */
+    deleteTraineeScripts(name) {
+        if (!confirm(`确定要清除「${name}」的所有话术数据吗？\n\n此操作不可恢复，但考试记录和能力清单不受影响。`)) return;
+        DB.deleteTraineeScripts(name);
+        alert(`已清除「${name}」的话术数据`);
+        this.renderMonitorPanel();
+    },
+
+    /** 清空所有新人的话术数据 */
+    clearAllScripts() {
+        if (!confirm("⚠️ 确定要清空所有新人的话术数据吗？\n\n这会删除所有主持已编写的话术版本和批注记录。\n考试记录和能力清单不受影响。\n\n此操作不可恢复！")) return;
+        if (!confirm("再次确认：输入\"确认清空\"执行操作")) return;
+        // 二次确认通过后再执行
+        const finalCheck = prompt("请输入\"确认清空\"以执行操作：");
+        if (finalCheck !== "确认清空") { alert("输入不一致，操作已取消"); return; }
+        DB.clearAllScripts();
+        alert("所有新人的话术数据已清空");
+        this.renderMonitorPanel();
+    },
+
+    /** 数据管理弹窗 */
+    showDataMgmt() {
+        const trainees = DB.getTrainees();
+        const names = Object.keys(trainees);
+        const templates = DB.getScriptTemplates();
+
+        // 统计
+        let totalScripts = 0;
+        names.forEach(n => {
+            const s = DB.getScripts(n);
+            totalScripts += Object.keys(s).length;
+        });
+
+        Modal.show(`
+            <div class="modal-header">
+                <h2 class="modal-title">数据管理</h2>
+                <button class="modal-close" onclick="Modal.hide()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:16px;">共 <strong>${names.length}</strong> 位新人，<strong>${totalScripts}</strong> 条话术记录</p>
+
+                <div class="card" style="margin-bottom:12px;border-left:3px solid #FF3B30;">
+                    <h4 style="margin-bottom:8px;">⚠️ 清空所有话术</h4>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+                        删除所有新人已编写的话术版本和批注记录。<br>
+                        考试记录、能力清单、管理密码不受影响。
+                    </p>
+                    <button class="btn btn-danger btn-sm" onclick="Modal.hide();Trainer.clearAllScripts()">清空所有话术</button>
+                </div>
+
+                <div class="card" style="border-left:3px solid var(--warning);">
+                    <h4 style="margin-bottom:8px;">按新人管理</h4>
+                    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">选择新人进行数据操作</p>
+                    ${names.map(n => {
+                        const s = DB.getScripts(n);
+                        const count = Object.keys(s).length;
+                        return `
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                                <span><strong>${n}</strong> — ${count} 条话术</span>
+                                <div style="display:flex;gap:6px;">
+                                    ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${n}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
+                                    <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTrainee('${n}')">删除账号</button>
+                                </div>
+                            </div>`;
+                    }).join("")}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Modal.hide()">关闭</button>
+            </div>
+        `);
     },
 
     // ===== 工具方法 =====
