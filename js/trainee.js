@@ -614,8 +614,12 @@ const Trainee = {
     /** 当前正在查看的话术场景ID */
     currentScriptId: null,
 
+    /** 当前列表筛选：all | mine */
+    _scriptFilter: "all",
+
     /** 渲染话术场景列表 */
-    renderScriptPanel() {
+    renderScriptPanel(filter) {
+        if (filter) this._scriptFilter = filter;
         const container = document.getElementById("trainee-panel-script");
         const templates = DB.getScriptTemplates();
         const scripts = DB.getScripts(Auth.traineeName);
@@ -625,13 +629,6 @@ const Trainee = {
             return;
         }
 
-        // 按分类分组
-        const groups = new Map();
-        templates.forEach(t => {
-            if (!groups.has(t.category)) groups.set(t.category, []);
-            groups.get(t.category).push(t);
-        });
-
         // 统计
         let totalWritten = 0, totalReviewed = 0;
         templates.forEach(t => {
@@ -640,6 +637,14 @@ const Trainee = {
             if (s && s.status === "reviewed") totalReviewed++;
         });
 
+        // 按分类分组
+        const groups = new Map();
+        templates.forEach(t => {
+            if (!groups.has(t.category)) groups.set(t.category, []);
+            groups.get(t.category).push(t);
+        });
+
+        const showMine = this._scriptFilter === "mine";
         const iconMap = {
             unwritten: '<span class="script-item-icon unwritten">○</span>',
             draft: '<span class="script-item-icon draft">◐</span>',
@@ -649,7 +654,16 @@ const Trainee = {
 
         let catsHTML = "";
         let first = true;
+        let hasContent = false;
+
         groups.forEach((items, catName) => {
+            // 「我的话术」模式：只显示有内容的场景
+            const displayItems = showMine
+                ? items.filter(t => { const s = scripts[t.id]; return s && s.versions.length > 0; })
+                : items;
+            if (displayItems.length === 0) return;
+            hasContent = true;
+
             const catWritten = items.filter(t => {
                 const s = scripts[t.id];
                 return s && s.status !== "draft" && s.versions.length > 0;
@@ -663,10 +677,10 @@ const Trainee = {
                     <div class="script-cat-header" onclick="Trainee.toggleCategory('${catId}')">
                         <span class="script-cat-arrow" id="${catId}-arrow">${first ? "▼" : "▶"}</span>
                         <span class="script-cat-name">${catName}</span>
-                        <span class="script-cat-count" style="color:${catColor};">${catWritten}/${items.length}</span>
+                        <span class="script-cat-count" style="color:${catColor};">${showMine ? displayItems.length : catWritten + '/' + items.length}</span>
                     </div>
                     <div class="script-cat-body" id="${catId}-body" style="${first ? "" : "display:none;"}">
-                        ${items.map(t => {
+                        ${displayItems.map(t => {
                             const s = scripts[t.id];
                             let status = "unwritten";
                             if (s) {
@@ -679,10 +693,19 @@ const Trainee = {
                             if (s && s.status === "reviewed" && activeVer && activeVer.feedback) {
                                 badgeHTML = '<span class="script-item-badge feedback">有批注</span>';
                             }
+                            // 「我的话术」模式：显示内容摘要
+                            let previewHTML = "";
+                            if (showMine && activeVer && activeVer.content) {
+                                const preview = activeVer.content.replace(/\n/g, " ").substring(0, 40);
+                                previewHTML = `<span class="script-item-preview">${Trainee.escapeHtml(preview)}${activeVer.content.length > 40 ? "…" : ""}</span>`;
+                            }
                             return `
                                 <div class="script-item" onclick="Trainee.openScriptScene('${t.id}')">
                                     ${iconMap[status]}
-                                    <span class="script-item-text">${t.scene}</span>
+                                    <div class="script-item-body">
+                                        <span class="script-item-text">${t.scene}</span>
+                                        ${previewHTML}
+                                    </div>
                                     ${badgeHTML}
                                 </div>`;
                         }).join("")}
@@ -691,7 +714,23 @@ const Trainee = {
             first = false;
         });
 
+        const filterBarHTML = totalWritten > 0 ? `
+            <div class="script-filter-bar">
+                <button class="script-filter-btn ${!showMine ? 'active' : ''}" onclick="Trainee.renderScriptPanel('all')">全部场景</button>
+                <button class="script-filter-btn ${showMine ? 'active' : ''}" onclick="Trainee.renderScriptPanel('mine')">我的话术</button>
+            </div>
+        ` : "";
+
+        if (showMine && !hasContent) {
+            container.innerHTML = `
+                ${filterBarHTML}
+                <p class="empty-state">还没有写过话术，先去"全部场景"里找一个开始写吧～</p>
+            `;
+            return;
+        }
+
         container.innerHTML = `
+            ${filterBarHTML}
             <div class="script-summary">
                 <span>已完成 <strong>${totalWritten}</strong> / ${templates.length}</span>
                 <span>培训师已批 <strong>${totalReviewed}</strong> 个</span>

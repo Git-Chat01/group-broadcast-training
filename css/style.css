@@ -884,6 +884,53 @@ body {
     color: var(--text-primary);
 }
 
+/* --- 筛选切换栏 --- */
+.script-filter-bar {
+    display: flex;
+    gap: 0;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+.script-filter-btn {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    min-height: 36px;
+}
+.script-filter-btn.active {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+}
+.script-filter-btn:active {
+    opacity: 0.8;
+}
+
+/* --- 场景列表项（扩展） --- */
+.script-item-body {
+    flex: 1;
+    min-width: 0;
+}
+.script-item-preview {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* 场景分类手风琴 — 复用 checklist-category 结构 */
 .script-category {
     margin-bottom: 12px;
