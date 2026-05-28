@@ -1036,7 +1036,7 @@ body {
     cursor: pointer;
     border-radius: 7px;
     transition: all 0.2s;
-    min-height: 36px;
+    min-height: 44px;
 }
 .script-filter-btn.active {
     background: var(--primary);

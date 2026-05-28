@@ -233,11 +233,13 @@ const Trainee = {
         const arrow = document.getElementById(catId + "-arrow");
         if (!body || !arrow) return;
 
+        const isScript = body.classList.contains("script-cat-body");
+        const bodySel = isScript ? ".script-cat-body" : ".checklist-cat-body";
+        const arrowSel = isScript ? ".script-cat-arrow" : ".checklist-cat-arrow";
+
         if (body.style.display === "none") {
-            // 折叠所有其他分类
-            document.querySelectorAll(".checklist-cat-body").forEach(b => b.style.display = "none");
-            document.querySelectorAll(".checklist-cat-arrow").forEach(a => a.textContent = "▶");
-            // 展开当前
+            document.querySelectorAll(bodySel).forEach(b => b.style.display = "none");
+            document.querySelectorAll(arrowSel).forEach(a => a.textContent = "▶");
             body.style.display = "";
             arrow.textContent = "▼";
         } else {
@@ -1019,17 +1021,6 @@ const Trainee = {
             sel.querySelector('option[value="0"]').value = "0";
         } else {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
-            // 首次保存后更新版本下拉（从"新建"变成"版本1"）
-            if (sel && sel.value === "0") {
-                const sc = DB.getScripts(Auth.traineeName)[this.currentScriptId];
-                if (sc && sc.activeVersion > 0) {
-                    const opt = document.createElement("option");
-                    opt.value = String(sc.activeVersion);
-                    opt.textContent = "版本 " + sc.activeVersion;
-                    opt.selected = true;
-                    sel.appendChild(opt);
-                }
-            }
         }
 
         // 保存按钮短暂变色反馈
@@ -1068,19 +1059,13 @@ const Trainee = {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
-        }
-
-        // 提交按钮变色反馈
-        const submitBtn = document.querySelector(".btn-script-submit");
-        if (submitBtn) {
-            submitBtn.textContent = "✓ 已提交";
-            submitBtn.style.background = "#34C759";
-            submitBtn.disabled = true;
-        }
-        // 更新版本下拉
-        const versionSel = document.getElementById("scriptVersionSelect");
-        if (versionSel && versionSel.value === "0") {
-            this.openScriptScene(this.currentScriptId);
+            // 更新按钮状态（非新建版本不重渲染，原地反馈）
+            const submitBtn = document.querySelector(".btn-script-submit");
+            if (submitBtn) {
+                submitBtn.textContent = "✓ 已提交";
+                submitBtn.style.background = "#34C759";
+                submitBtn.disabled = true;
+            }
         }
     },
 
