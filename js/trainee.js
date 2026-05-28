@@ -729,13 +729,24 @@ const Trainee = {
             return;
         }
 
+        const pct = templates.length > 0 ? Math.round(totalWritten / templates.length * 100) : 0;
+        const pctColor = pct >= 80 ? "var(--success)" : (pct >= 40 ? "var(--warning)" : "var(--text-muted)");
+
         container.innerHTML = `
             ${filterBarHTML}
-            <div class="script-summary">
-                <span>已完成 <strong>${totalWritten}</strong> / ${templates.length}</span>
-                <span>培训师已批 <strong>${totalReviewed}</strong> 个</span>
+            <div class="progress-section">
+                <div class="card" style="text-align:center;padding:20px 16px;">
+                    <div style="font-size:40px;font-weight:700;color:${pctColor};line-height:1;">${totalWritten}<span style="font-size:18px;color:var(--text-muted);font-weight:400;"> / ${templates.length}</span></div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">话术场景已完成</div>
+                    <div class="progress-bar-wrap" style="margin-top:12px;">
+                        <div class="progress-bar-fill checklist-progress-fill" style="width:${pct}%;"></div>
+                    </div>
+                    <div class="progress-label">${pct}%${totalReviewed > 0 ? ' · 培训师已批 ' + totalReviewed + ' 个' : ''}</div>
+                </div>
             </div>
-            ${catsHTML}
+            <div class="progress-section">
+                ${catsHTML}
+            </div>
         `;
     },
 
