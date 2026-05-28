@@ -303,13 +303,23 @@ const DB = {
         return newVersion;
     },
 
-    /** 更新草稿（不创建新版本，直接修改当前激活版本的内容） */
+    /** 更新草稿（不创建新版本，直接修改当前激活版本的内容；首次保存自动创建） */
     saveScriptDraft(name, templateId, content) {
         const trainees = this.getTrainees();
-        if (!trainees[name] || !trainees[name].scripts) return;
+        if (!trainees[name]) trainees[name] = { moduleProgress: {}, examHistory: [], checklistProgress: {} };
+        if (!trainees[name].scripts) trainees[name].scripts = {};
 
         const sc = trainees[name].scripts[templateId];
-        if (!sc) return;
+        // 首次保存：直接创建版本1
+        if (!sc) {
+            trainees[name].scripts[templateId] = {
+                versions: [{ version: 1, content: content, createdAt: new Date().toLocaleString("zh-CN"), feedback: null }],
+                activeVersion: 1,
+                status: "draft"
+            };
+            this.saveTrainees(trainees);
+            return;
+        }
 
         const active = sc.versions.find(v => v.version === sc.activeVersion);
         if (active && active.feedback === null) {
