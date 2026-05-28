@@ -846,13 +846,31 @@ const Trainee = {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("请先写点内容再保存"); return; }
         DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
-        // 绿色闪烁反馈
-        const textarea = document.getElementById("scriptContentInput");
-        const origBg = textarea.style.background;
-        textarea.style.background = "#E8F5E9";
-        setTimeout(() => { textarea.style.background = origBg; }, 300);
-        // 回到列表刷新状态
-        setTimeout(() => this.renderScriptPanel(), 500);
+        // 保存按钮短暂变色反馈
+        const draftBtn = document.querySelector(".btn-script-draft");
+        if (draftBtn) {
+            const origText = draftBtn.textContent;
+            draftBtn.textContent = "✓ 已保存";
+            draftBtn.style.background = "#E8F5E9";
+            draftBtn.style.color = "#34C759";
+            setTimeout(() => {
+                draftBtn.textContent = origText;
+                draftBtn.style.background = "";
+                draftBtn.style.color = "";
+            }, 1200);
+        }
+        // 同时更新版本下拉（如果是首次保存，版本号从0变成1）
+        const sel = document.getElementById("scriptVersionSelect");
+        if (sel && sel.value === "0") {
+            const sc = DB.getScripts(Auth.traineeName)[this.currentScriptId];
+            if (sc && sc.activeVersion > 0) {
+                const opt = document.createElement("option");
+                opt.value = String(sc.activeVersion);
+                opt.textContent = "版本 " + sc.activeVersion;
+                opt.selected = true;
+                sel.appendChild(opt);
+            }
+        }
     },
 
     /** 提交给培训师 */
@@ -860,10 +878,21 @@ const Trainee = {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("请先写内容再提交"); return; }
 
+        // 先确保保存最新内容
         DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
         DB.submitScript(Auth.traineeName, this.currentScriptId);
-        alert("已提交给培训师，等待批注～");
-        this.renderScriptPanel();
+        // 提交按钮变色反馈
+        const submitBtn = document.querySelector(".btn-script-submit");
+        if (submitBtn) {
+            submitBtn.textContent = "✓ 已提交";
+            submitBtn.style.background = "#34C759";
+            submitBtn.disabled = true;
+        }
+        // 更新版本下拉
+        const sel = document.getElementById("scriptVersionSelect");
+        if (sel && sel.value === "0") {
+            this.openScriptScene(this.currentScriptId);
+        }
     },
 
     /** 切换版本 */
