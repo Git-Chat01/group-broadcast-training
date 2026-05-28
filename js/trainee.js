@@ -552,24 +552,30 @@ const Trainee = {
         const clPct = clTotal > 0 ? Math.round(clMastered / clTotal * 100) : 0;
 
         // 排名
-        const rankings = DB.getRankings();
-        const myRank = rankings.findIndex(r => r.name === Auth.traineeName) + 1;
-        const totalPeople = rankings.length;
-        const myScore = rankings.find(r => r.name === Auth.traineeName);
-        const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"]; // 金银铜
+        const allRankings = DB.getRankings();
+        const rankings = allRankings.filter(r => r.qualified);  // 只上榜的人参与排名
+        const myData = allRankings.find(r => r.name === Auth.traineeName);
+        const myRank = rankings.findIndex(r => r.name === Auth.traineeName) + 1;  // 0 = 未上榜
+        const totalQualified = rankings.length;
+        const iAmQualified = myData && myData.qualified;
 
         let rankingHTML = "";
-        if (totalPeople >= 2) {
+        if (totalQualified >= 2 || iAmQualified) {
             const showTop = rankings.slice(0, 5);
             rankingHTML = `
             <div class="progress-section">
                 <h3>🏆 综合排名</h3>
+                ${iAmQualified ? `
                 <div class="rank-hero">
                     <span class="rank-number">#${myRank}</span>
                     <span class="rank-divider">/</span>
-                    <span class="rank-total">${totalPeople}人</span>
-                    ${myScore ? `<span class="rank-score">${myScore.total}分</span>` : ''}
-                </div>
+                    <span class="rank-total">${totalQualified}人</span>
+                    <span class="rank-score">${myData.total}分</span>
+                </div>` : `
+                <div class="rank-hero">
+                    <span class="rank-number" style="font-size:22px;color:var(--text-muted);">积累中</span>
+                    <span class="rank-total" style="font-size:14px;">完成3个话术或通过1场考试后上榜</span>
+                </div>`}
                 <div class="rank-list">
                     ${showTop.map((r, i) => {
                         const isMe = r.name === Auth.traineeName;
@@ -582,13 +588,13 @@ const Trainee = {
                             </div>`;
                     }).join("")}
                 </div>
-                ${myRank > 5 ? `
+                ${iAmQualified && myRank > 5 ? `
                 <div class="rank-row rank-row-me" style="margin-top:4px;">
                     <span class="rank-pos">${myRank}</span>
                     <span class="rank-name"><strong>我</strong></span>
-                    <span class="rank-pts">${myScore ? myScore.total : 0}分</span>
+                    <span class="rank-pts">${myData.total}分</span>
                 </div>` : ''}
-                <div class="rank-hint">想提高排名？多完成话术场景效果最快</div>
+                <div class="rank-hint">${iAmQualified ? '想提高排名？多完成话术场景效果最快' : '先完成3个话术场景或通过1场考试即可上榜'}</div>
             </div>`;
         }
 

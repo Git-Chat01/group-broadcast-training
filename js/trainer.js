@@ -327,15 +327,25 @@ const Trainer = {
                 <div class="rank-trainer-table-wrap">
                     <table class="data-table rank-table">
                         <thead><tr><th>#</th><th>新人</th><th>综合分</th><th>话术</th><th>考试</th><th>能力</th></tr></thead>
-                        <tbody>${rankings.map((r, i) => `
-                            <tr>
-                                <td style="font-weight:700;">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</td>
-                                <td><strong>${r.name}</strong></td>
-                                <td style="font-weight:700;color:var(--primary);">${r.total}</td>
-                                <td>${r.scriptDone}/${r.scriptTotal}</td>
-                                <td>${r.examScore}分</td>
-                                <td>${r.clMastered}/${r.clTotal}</td>
-                            </tr>`).join("")}
+                        <tbody>
+                            ${rankings.filter(r => r.qualified).map((r, i) => `
+                                <tr>
+                                    <td style="font-weight:700;">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</td>
+                                    <td><strong>${r.name}</strong></td>
+                                    <td style="font-weight:700;color:var(--primary);">${r.total}</td>
+                                    <td>${r.scriptDone}/${r.scriptTotal}</td>
+                                    <td>${r.examScore}分</td>
+                                    <td>${r.clMastered}/${r.clTotal}</td>
+                                </tr>`).join("")}
+                            ${rankings.filter(r => !r.qualified).map(r => `
+                                <tr style="opacity:0.5;">
+                                    <td>-</td>
+                                    <td>${r.name} <span style="font-size:11px;color:var(--text-muted);">观察期</span></td>
+                                    <td>-</td>
+                                    <td>${r.scriptDone}/${r.scriptTotal}</td>
+                                    <td>${r.examScore}分</td>
+                                    <td>${r.clMastered}/${r.clTotal}</td>
+                                </tr>`).join("")}
                         </tbody>
                     </table>
                 </div>` : ''}

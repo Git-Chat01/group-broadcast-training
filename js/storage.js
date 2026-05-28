@@ -269,20 +269,29 @@ const DB = {
             // 综合分
             const total = Math.round(scriptScore * 0.5 + examScore * 0.3 + clScore * 0.2);
 
+            // 上榜门槛：完成≥3个话术场景 或 通过≥1场考试
+            const examPassed = history.filter(r => r.score >= 60).length;
+            const qualified = scriptDone >= 3 || examPassed >= 1;
+
             return {
                 name: t.name,
                 total,
+                qualified,
                 scriptScore,
                 scriptDone,
                 scriptTotal: templates.length,
                 examScore,
-                examPassed: history.filter(r => r.score >= 60).length,
+                examPassed,
                 examTotal: totalExams,
                 clScore,
                 clMastered,
                 clTotal: checklist.length
             };
-        }).sort((a, b) => b.total - a.total);
+        }).sort((a, b) => {
+            // 上榜的排前面按分数降序，未上榜的排后面按活跃度降序
+            if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
+            return b.total - a.total;
+        });
     },
 
     /** 获取或创建新人记录 */
