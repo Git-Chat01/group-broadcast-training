@@ -236,6 +236,55 @@ const DB = {
         }));
     },
 
+    /** 计算所有新人的综合排名
+     *  权重：话术 50% / 考试 30% / 能力清单 20% */
+    getRankings() {
+        const all = this.getTraineesAll();
+        const templates = this.getScriptTemplates();
+        const checklist = this.getChecklist();
+        const exams = this.getExams();
+        const totalExams = Object.keys(exams).length;
+
+        return all.map(t => {
+            // 话术分：已完成场景数 / 总场景数 × 100
+            const scripts = t.scripts || {};
+            let scriptDone = 0;
+            templates.forEach(tmpl => {
+                const s = scripts[tmpl.id];
+                if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) scriptDone++;
+            });
+            const scriptScore = templates.length > 0 ? Math.round(scriptDone / templates.length * 100) : 0;
+
+            // 考试分：平均分（无考试记录时为0）
+            const history = t.examHistory || [];
+            const examScore = history.length > 0
+                ? Math.round(history.reduce((s, r) => s + r.score, 0) / history.length)
+                : 0;
+
+            // 能力分：已掌握数 / 总项数 × 100
+            const cp = t.checklistProgress || {};
+            const clMastered = checklist.filter(c => cp[c.id] === "mastered").length;
+            const clScore = checklist.length > 0 ? Math.round(clMastered / checklist.length * 100) : 0;
+
+            // 综合分
+            const total = Math.round(scriptScore * 0.5 + examScore * 0.3 + clScore * 0.2);
+
+            return {
+                name: t.name,
+                total,
+                scriptScore,
+                scriptDone,
+                scriptTotal: templates.length,
+                examScore,
+                examPassed: history.filter(r => r.score >= 60).length,
+                examTotal: totalExams,
+                clScore,
+                clMastered,
+                clTotal: checklist.length
+            };
+        }).sort((a, b) => b.total - a.total);
+    },
+
     /** 获取或创建新人记录 */
     getTrainee(name) {
         const trainees = this.getTrainees();

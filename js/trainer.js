@@ -311,6 +311,9 @@ const Trainer = {
         const exams = DB.getExams();
         const checklist = DB.getChecklist();
 
+        // 排名数据
+        const rankings = DB.getRankings();
+
         container.innerHTML = `
             <div class="progress-section">
                 <div class="card-row" style="margin-bottom:12px;">
@@ -320,6 +323,22 @@ const Trainer = {
                         <button class="btn btn-outline btn-sm" onclick="Trainer.exportCSV()">导出 CSV</button>
                     </div>
                 </div>
+                ${rankings.length >= 2 ? `
+                <div class="rank-trainer-table-wrap">
+                    <table class="data-table rank-table">
+                        <thead><tr><th>#</th><th>新人</th><th>综合分</th><th>话术</th><th>考试</th><th>能力</th></tr></thead>
+                        <tbody>${rankings.map((r, i) => `
+                            <tr>
+                                <td style="font-weight:700;">${i < 3 ? ['🥇','🥈','🥉'][i] : i + 1}</td>
+                                <td><strong>${r.name}</strong></td>
+                                <td style="font-weight:700;color:var(--primary);">${r.total}</td>
+                                <td>${r.scriptDone}/${r.scriptTotal}</td>
+                                <td>${r.examScore}分</td>
+                                <td>${r.clMastered}/${r.clTotal}</td>
+                            </tr>`).join("")}
+                        </tbody>
+                    </table>
+                </div>` : ''}
                 ${names.map(name => {
                     const t = trainees[name];
                     const history = t.examHistory || [];

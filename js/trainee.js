@@ -551,7 +551,49 @@ const Trainee = {
         const clMastered = checklist.filter(c => clProgress[c.id] === "mastered").length;
         const clPct = clTotal > 0 ? Math.round(clMastered / clTotal * 100) : 0;
 
+        // 排名
+        const rankings = DB.getRankings();
+        const myRank = rankings.findIndex(r => r.name === Auth.traineeName) + 1;
+        const totalPeople = rankings.length;
+        const myScore = rankings.find(r => r.name === Auth.traineeName);
+        const rankColors = ["#FFD700", "#C0C0C0", "#CD7F32"]; // 金银铜
+
+        let rankingHTML = "";
+        if (totalPeople >= 2) {
+            const showTop = rankings.slice(0, 5);
+            rankingHTML = `
+            <div class="progress-section">
+                <h3>🏆 综合排名</h3>
+                <div class="rank-hero">
+                    <span class="rank-number">#${myRank}</span>
+                    <span class="rank-divider">/</span>
+                    <span class="rank-total">${totalPeople}人</span>
+                    ${myScore ? `<span class="rank-score">${myScore.total}分</span>` : ''}
+                </div>
+                <div class="rank-list">
+                    ${showTop.map((r, i) => {
+                        const isMe = r.name === Auth.traineeName;
+                        const medal = i < 3 ? '<span class="rank-medal">' + ['🥇','🥈','🥉'][i] + '</span>' : '<span class="rank-pos">' + (i + 1) + '</span>';
+                        return `
+                            <div class="rank-row ${isMe ? 'rank-row-me' : ''}">
+                                ${medal}
+                                <span class="rank-name">${isMe ? '<strong>我</strong>' : r.name}</span>
+                                <span class="rank-pts">${r.total}分</span>
+                            </div>`;
+                    }).join("")}
+                </div>
+                ${myRank > 5 ? `
+                <div class="rank-row rank-row-me" style="margin-top:4px;">
+                    <span class="rank-pos">${myRank}</span>
+                    <span class="rank-name"><strong>我</strong></span>
+                    <span class="rank-pts">${myScore ? myScore.total : 0}分</span>
+                </div>` : ''}
+                <div class="rank-hint">想提高排名？多完成话术场景效果最快</div>
+            </div>`;
+        }
+
         container.innerHTML = `
+            ${rankingHTML}
             <div class="progress-section">
                 <h3>学习概览</h3>
                 <div class="progress-grid-3">
