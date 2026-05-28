@@ -633,7 +633,7 @@ const Trainee = {
         let totalWritten = 0, totalReviewed = 0;
         templates.forEach(t => {
             const s = scripts[t.id];
-            if (s && s.status !== "draft" && s.versions.length > 0) totalWritten++;
+            if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) totalWritten++;
             if (s && s.status === "reviewed") totalReviewed++;
         });
 
@@ -666,7 +666,7 @@ const Trainee = {
 
             const catWritten = items.filter(t => {
                 const s = scripts[t.id];
-                return s && s.status !== "draft" && s.versions.length > 0;
+                return s && (s.completed || s.status === "submitted" || s.status === "reviewed");
             }).length;
             const catColor = catWritten === items.length ? "var(--success)"
                 : (catWritten === 0 ? "var(--text-muted)" : "var(--warning)");
@@ -685,8 +685,8 @@ const Trainee = {
                             let status = "unwritten";
                             if (s) {
                                 if (s.status === "reviewed") status = "reviewed";
-                                else if (s.status === "submitted") status = "written";
-                                else if (s.status === "draft" && s.versions.length > 0) status = "draft";
+                                else if (s.completed || s.status === "submitted") status = "written";
+                                else if (s.versions.length > 0) status = "draft";
                             }
                             let badgeHTML = "";
                             const activeVer = s ? s.versions[s.activeVersion - 1] : null;
@@ -939,11 +939,12 @@ const Trainee = {
 
         if (isNewVersion) {
             DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "submitted");
-            // 刷新页面以显示新版本
+            DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
             this.openScriptScene(this.currentScriptId);
         } else {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
+            DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
         }
 
         // 提交按钮变色反馈
@@ -973,10 +974,21 @@ const Trainee = {
         }
     },
 
-    /** 打开试读模式 */
+    /** 打开试读模式 — 试读即视为完成该场景 */
     openReadMode() {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("还没有写内容，先写点东西再试读吧"); return; }
+
+        // 先确保保存当前内容
+        const sel = document.getElementById("scriptVersionSelect");
+        if (sel && sel.value === "0") {
+            DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "draft");
+            this.openScriptScene(this.currentScriptId);
+        } else {
+            DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+        }
+        // 标记完成
+        DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
 
         const overlay = document.createElement("div");
         overlay.className = "read-mode-overlay";

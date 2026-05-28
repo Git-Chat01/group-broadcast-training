@@ -362,6 +362,17 @@ const DB = {
         }
     },
 
+    /** 标记场景为已完成（试读或提交后调用） */
+    markScriptCompleted(name, templateId) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+        const sc = trainees[name].scripts[templateId];
+        if (sc && sc.versions.length > 0) {
+            sc.completed = true;
+            this.saveTrainees(trainees);
+        }
+    },
+
     /** 培训师添加批注 */
     addScriptFeedback(name, templateId, versionNum, feedbackText) {
         const trainees = this.getTrainees();
