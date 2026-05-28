@@ -880,11 +880,40 @@ const Trainee = {
         });
     },
 
-    /** 保存草稿 */
+    /** 保存草稿 — 当版本下拉选"新建"时创建新版本，否则覆盖当前版本 */
     saveScriptDraft() {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("请先写点内容再保存"); return; }
-        DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+
+        const sel = document.getElementById("scriptVersionSelect");
+        const isNewVersion = sel && sel.value === "0";
+
+        if (isNewVersion) {
+            // 用户选了"新建"，创建一个全新版本
+            const newV = DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "draft");
+            // 刷新版本下拉
+            const opt = document.createElement("option");
+            opt.value = String(newV);
+            opt.textContent = "版本 " + newV;
+            opt.selected = true;
+            sel.appendChild(opt);
+            // 把"新建"选项的值重置，下次选新建时又可以用
+            sel.querySelector('option[value="0"]').value = "0";
+        } else {
+            DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+            // 首次保存后更新版本下拉（从"新建"变成"版本1"）
+            if (sel && sel.value === "0") {
+                const sc = DB.getScripts(Auth.traineeName)[this.currentScriptId];
+                if (sc && sc.activeVersion > 0) {
+                    const opt = document.createElement("option");
+                    opt.value = String(sc.activeVersion);
+                    opt.textContent = "版本 " + sc.activeVersion;
+                    opt.selected = true;
+                    sel.appendChild(opt);
+                }
+            }
+        }
+
         // 保存按钮短暂变色反馈
         const draftBtn = document.querySelector(".btn-script-draft");
         if (draftBtn) {
@@ -898,28 +927,25 @@ const Trainee = {
                 draftBtn.style.color = "";
             }, 1200);
         }
-        // 同时更新版本下拉（如果是首次保存，版本号从0变成1）
-        const sel = document.getElementById("scriptVersionSelect");
-        if (sel && sel.value === "0") {
-            const sc = DB.getScripts(Auth.traineeName)[this.currentScriptId];
-            if (sc && sc.activeVersion > 0) {
-                const opt = document.createElement("option");
-                opt.value = String(sc.activeVersion);
-                opt.textContent = "版本 " + sc.activeVersion;
-                opt.selected = true;
-                sel.appendChild(opt);
-            }
-        }
     },
 
-    /** 提交给培训师 */
+    /** 提交给培训师 — 当版本下拉选"新建"时创建新版本再提交 */
     submitScript() {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("请先写内容再提交"); return; }
 
-        // 先确保保存最新内容
-        DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
-        DB.submitScript(Auth.traineeName, this.currentScriptId);
+        const sel = document.getElementById("scriptVersionSelect");
+        const isNewVersion = sel && sel.value === "0";
+
+        if (isNewVersion) {
+            DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "submitted");
+            // 刷新页面以显示新版本
+            this.openScriptScene(this.currentScriptId);
+        } else {
+            DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
+            DB.submitScript(Auth.traineeName, this.currentScriptId);
+        }
+
         // 提交按钮变色反馈
         const submitBtn = document.querySelector(".btn-script-submit");
         if (submitBtn) {
@@ -928,8 +954,8 @@ const Trainee = {
             submitBtn.disabled = true;
         }
         // 更新版本下拉
-        const sel = document.getElementById("scriptVersionSelect");
-        if (sel && sel.value === "0") {
+        const versionSel = document.getElementById("scriptVersionSelect");
+        if (versionSel && versionSel.value === "0") {
             this.openScriptScene(this.currentScriptId);
         }
     },
