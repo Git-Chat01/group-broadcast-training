@@ -848,10 +848,24 @@ const Trainee = {
 
         // 初始化示范话术当前索引
         this._exampleIndex = 0;
+        this._viewedMaxExample = 0;
     },
 
     /** 示范话术当前索引 */
     _exampleIndex: 0,
+    /** 已查看的示范话术最大索引（记录用户是否看完了所有示范） */
+    _viewedMaxExample: 0,
+
+    /** 检查是否已看完所有示范话术 */
+    _hasViewedAllExamples() {
+        const templates = DB.getScriptTemplates();
+        const template = templates.find(t => t.id === this.currentScriptId);
+        if (!template) return true;
+        const total = (template.examples || []).length;
+        // 只有1条或没有示范话术，默认已经"看完"
+        if (total <= 1) return true;
+        return this._viewedMaxExample >= total - 1;
+    },
 
     /** 示范话术左右滑动 */
     slideExample(dir) {
@@ -864,6 +878,11 @@ const Trainee = {
         this._exampleIndex += dir;
         if (this._exampleIndex < 0) this._exampleIndex = 0;
         if (this._exampleIndex >= total) this._exampleIndex = total - 1;
+
+        // 记录用户看过的最远一条示范
+        if (this._exampleIndex > this._viewedMaxExample) {
+            this._viewedMaxExample = this._exampleIndex;
+        }
 
         const track = document.getElementById("scriptExamplesTrack");
         if (track) {
@@ -937,6 +956,11 @@ const Trainee = {
         const sel = document.getElementById("scriptVersionSelect");
         const isNewVersion = sel && sel.value === "0";
 
+        if (!this._hasViewedAllExamples()) {
+            alert("请先看完所有示范话术（左右滑动切换），学习完了再提交～");
+            return;
+        }
+
         if (isNewVersion) {
             DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "submitted");
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
@@ -978,6 +1002,11 @@ const Trainee = {
     openReadMode() {
         const content = document.getElementById("scriptContentInput").value.trim();
         if (!content) { alert("还没有写内容，先写点东西再试读吧"); return; }
+
+        if (!this._hasViewedAllExamples()) {
+            alert("请先看完所有示范话术（左右滑动切换），学习完了再试读～");
+            return;
+        }
 
         // 先确保保存当前内容
         const sel = document.getElementById("scriptVersionSelect");
