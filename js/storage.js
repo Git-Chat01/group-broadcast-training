@@ -28,12 +28,15 @@ const DB = {
         // 版本一致：无需更新
         if (storedVersion === codeVersion) return;
 
-        // 版本不一致：智能合并
+        // 版本不一致：智能合并（仅合并模板/题库/清单数据）
         this._mergeModules(defaults.modules || []);
         this._mergeExams(defaults.exams || {});
         this._mergeChecklist(defaults.checklist || []);
         this._mergeScriptTemplates(defaults.scriptTemplates || []);
-        // adminPassword 和 trainees 始终保留用户数据，不覆盖
+        // ⚠️ 以下两项为运行态用户数据，任何情况下都不覆盖、不删除：
+        //    adminPassword — 培训师自设密码
+        //    trainees — 所有新人的考试记录、能力清单进度、话术版本
+        //    丢失这些数据 = 培训数据全毁，属于严重事故
         localStorage.setItem("dataVersion", codeVersion);
     },
 
@@ -125,6 +128,9 @@ const DB = {
      * 智能合并话术模板：
      * - 新模板（ID 不存在）→ 自动添加
      * - 已有模板 → 用默认数据更新所有字段
+     * ⚠️ 绝不删除已有模板 —— 即使某个模板从 Defaults 中移除，
+     *    也要保留在 localStorage 中，因为可能有新人的话术版本数据关联此 ID。
+     *    删除模板 ID 会导致新人的话术数据变成"孤儿数据"无法访问。
      */
     _mergeScriptTemplates(defaultTemplates) {
         const existing = this.getScriptTemplates();
