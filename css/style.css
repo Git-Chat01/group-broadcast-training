@@ -373,7 +373,7 @@ body {
 /* -- 图片选项配对（图片数 === 选项数时使用） -- */
 .img-opt-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 .img-opt-card {
@@ -1009,6 +1009,7 @@ body {
 
     /* 图片选项配对 — 手机端 2 列 */
     .img-opt-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .img-opt-img { object-fit: contain; }
     .img-opt-label { font-size: 12px; padding: 8px 10px; min-height: 44px; }
     .img-opt-zoom { width: 36px; height: 36px; top: 4px; right: 4px; font-size: 16px; }
 

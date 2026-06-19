@@ -4,7 +4,7 @@
    ============================================ */
 
 /** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据 */
-const DATA_VERSION = 16;
+const DATA_VERSION = 20;
 
 const Defaults = {
     adminPassword: "xsx2001..",
