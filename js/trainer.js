@@ -46,19 +46,38 @@ const Trainer = {
             <!-- 密码管理 -->
             <div class="progress-section">
                 <h3>管理密码</h3>
-                <div class="inline-flex">
-                    <input type="password" class="form-input" id="inputNewPassword" placeholder="输入新密码" style="width:200px;">
-                    <button class="btn btn-primary btn-sm" id="btnChangePassword">修改密码</button>
+                <div style="display:flex;flex-direction:column;gap:10px;max-width:320px;">
+                    <input type="password" class="form-input" id="inputOldPassword" placeholder="输入旧密码" style="width:100%;">
+                    <input type="password" class="form-input" id="inputNewPassword" placeholder="输入新密码" style="width:100%;">
+                    <input type="password" class="form-input" id="inputConfirmPassword" placeholder="确认新密码" style="width:100%;">
+                    <button class="btn btn-primary btn-sm" id="btnChangePassword" style="align-self:flex-start;">修改密码</button>
                 </div>
+                <p class="form-hint" id="passwordMsg" style="display:none;margin-top:8px;"></p>
             </div>
         `;
 
         document.getElementById("btnChangePassword").addEventListener("click", () => {
-            const pwd = document.getElementById("inputNewPassword").value.trim();
-            if (!pwd) { alert("请输入新密码"); return; }
-            DB.setAdminPassword(pwd);
-            alert("密码已更新！");
+            const msgEl = document.getElementById("passwordMsg");
+            const showMsg = (text, ok) => {
+                msgEl.textContent = text;
+                msgEl.style.color = ok ? "var(--success)" : "var(--danger)";
+                msgEl.style.display = "block";
+            };
+
+            const oldPwd = document.getElementById("inputOldPassword").value.trim();
+            const newPwd = document.getElementById("inputNewPassword").value.trim();
+            const confirmPwd = document.getElementById("inputConfirmPassword").value.trim();
+
+            if (!oldPwd) { showMsg("请输入旧密码", false); return; }
+            if (oldPwd !== DB.getAdminPassword()) { showMsg("旧密码错误", false); return; }
+            if (!newPwd) { showMsg("请输入新密码", false); return; }
+            if (newPwd !== confirmPwd) { showMsg("两次输入的新密码不一致", false); return; }
+
+            DB.setAdminPassword(newPwd);
+            showMsg("密码已更新！", true);
+            document.getElementById("inputOldPassword").value = "";
             document.getElementById("inputNewPassword").value = "";
+            document.getElementById("inputConfirmPassword").value = "";
         });
     },
 
@@ -368,11 +387,19 @@ const Trainer = {
                         if (s && s.status !== "draft" && s.versions.length > 0) scriptWritten++;
                     });
 
+                    const hasPwd = !!t.passwordHash;
+
                     return `
                         <div class="card">
                             <div class="card-row" style="margin-bottom:8px;">
-                                <strong style="font-size:16px;">${name}</strong>
-                                <button class="btn btn-danger btn-sm" onclick="Trainer.deleteTrainee('${name}')">删除</button>
+                                <div>
+                                    <strong style="font-size:16px;">${name}</strong>
+                                    <span style="font-size:12px;color:${hasPwd ? 'var(--success)' : 'var(--warning)'};margin-left:8px;">${hasPwd ? '🔒 已设密码' : '⚠️ 未设密码'}</span>
+                                </div>
+                                <div style="display:flex;gap:6px;">
+                                    <button class="btn btn-outline btn-sm" onclick="Trainer.setTraineePassword('${name}')">修改密码</button>
+                                    <button class="btn btn-danger btn-sm" onclick="Trainer.deleteTrainee('${name}')">删除</button>
+                                </div>
                             </div>
                             <div class="trainee-stats-grid">
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${passed}/${history.length}</span><br><span style="font-size:12px;color:var(--text-muted);">考试通过</span></div>
@@ -402,6 +429,28 @@ const Trainer = {
     deleteTrainee(name) {
         if (!confirm(`确定要删除新人「${name}」的所有数据吗？此操作不可恢复。`)) return;
         DB.deleteTrainee(name);
+        this.renderMonitorPanel();
+    },
+
+    /** 培训师直接设置/重置新人密码 */
+    async setTraineePassword(name) {
+        const hasPwd = !!DB.getTraineePasswordHash(name);
+        const label = hasPwd ? `修改「${name}」的密码` : `为「${name}」设置密码`;
+        const newPwd = prompt(`${label}\n\n请输入新密码（至少6位）：\n（留空则清除密码，新人下次需自设）`);
+        if (newPwd === null) return; // 取消
+
+        if (newPwd.trim() === "") {
+            // 留空 → 清除密码
+            if (!confirm(`确定要清除「${name}」的密码吗？\n\n清除后该新人下次登录时需要重新设置密码。`)) return;
+            DB.clearTraineePassword(name);
+            alert(`已清除「${name}」的密码，下次登录时需自设。`);
+        } else {
+            // 设置了新密码 → 直接生效
+            if (newPwd.trim().length < 6) { alert("密码至少6位，请重新操作。"); return; }
+            const hash = await Auth.hashPassword(newPwd.trim());
+            DB.setTraineePassword(name, hash);
+            alert(`「${name}」的密码已更新为：${newPwd.trim()}\n\n请告知该新人。`);
+        }
         this.renderMonitorPanel();
     },
 
@@ -646,6 +695,7 @@ const Trainer = {
                             <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
                                 <span><strong>${n}</strong> — ${count} 条话术</span>
                                 <div style="display:flex;gap:6px;">
+                                    <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:none;font-size:12px;" onclick="Modal.hide();Trainer.setTraineePassword('${n}')">修改密码</button>
                                     ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${n}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
                                     <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTrainee('${n}')">删除账号</button>
                                 </div>

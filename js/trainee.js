@@ -705,7 +705,25 @@ const Trainee = {
                             return `<tr><td>${r.examTitle}</td><td ${sc}><strong>${r.score}分</strong></td><td>${r.correctCount}/${r.total}</td><td>${r.date}</td></tr>`;
                         }).join("")}</tbody>
                     </table>`}
+
+            <div class="progress-section">
+                <h3>🔒 密码设置</h3>
+                <div style="display:flex;flex-direction:column;gap:10px;max-width:320px;">
+                    <input type="password" class="form-input" id="inputCurrentPwd" placeholder="当前密码" style="width:100%;">
+                    <input type="password" class="form-input" id="inputNewPwd" placeholder="新密码（至少6位）" style="width:100%;">
+                    <input type="password" class="form-input" id="inputConfirmNewPwd" placeholder="确认新密码" style="width:100%;">
+                    <div class="password-strength-wrap" id="changePwdStrengthWrap" style="display:none;">
+                        <div class="password-strength-bar">
+                            <div class="password-strength-fill" id="changePwdStrengthFill"></div>
+                        </div>
+                        <div class="password-strength-label" id="changePwdStrengthLabel"></div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="btnChangeTraineePwd" style="align-self:flex-start;">修改密码</button>
+                </div>
+                <p class="form-hint" id="changePwdMsg" style="display:none;margin-top:8px;"></p>
             </div>`;
+        // 绑定密码修改事件
+        this._bindPasswordChange();
     },
 
     /** 生成进度面板中的清单摘要 */
@@ -734,6 +752,59 @@ const Trainee = {
             html += `</div>`;
         });
         return html;
+    },
+
+    /** 绑定密码修改事件（在 renderProgressPanel 中调用） */
+    _bindPasswordChange() {
+        const newPwdEl = document.getElementById("inputNewPwd");
+        const btnEl = document.getElementById("btnChangeTraineePwd");
+        if (!newPwdEl || !btnEl) return;
+
+        // 新密码输入 → 强度实时更新
+        newPwdEl.addEventListener("input", (e) => {
+            const pwd = e.target.value;
+            const wrap = document.getElementById("changePwdStrengthWrap");
+            if (!wrap) return;
+            if (pwd.length > 0) {
+                wrap.style.display = "block";
+                const s = Auth.evaluatePasswordStrength(pwd);
+                document.getElementById("changePwdStrengthFill").style.width = s.pct + "%";
+                document.getElementById("changePwdStrengthFill").className = "password-strength-fill strength-" + s.level;
+                document.getElementById("changePwdStrengthLabel").textContent = "密码强度：" + s.label;
+                document.getElementById("changePwdStrengthLabel").className = "password-strength-label strength-" + s.level;
+            } else {
+                wrap.style.display = "none";
+            }
+        });
+
+        // 修改密码按钮
+        btnEl.addEventListener("click", async () => {
+            const msgEl = document.getElementById("changePwdMsg");
+            const show = (text, ok) => {
+                msgEl.textContent = text;
+                msgEl.style.color = ok ? "var(--success)" : "var(--danger)";
+                msgEl.style.display = "block";
+            };
+
+            const currentPwd = document.getElementById("inputCurrentPwd").value;
+            const newPwd = document.getElementById("inputNewPwd").value;
+            const confirmPwd = document.getElementById("inputConfirmNewPwd").value;
+
+            if (!currentPwd) { show("请输入当前密码", false); return; }
+            if (!newPwd) { show("请输入新密码", false); return; }
+            if (newPwd.length < 6) { show("密码至少6位", false); return; }
+            if (newPwd !== confirmPwd) { show("两次密码不一致", false); return; }
+
+            const isValid = await Auth.verifyPassword(Auth.traineeName, currentPwd);
+            if (!isValid) { show("当前密码错误", false); return; }
+
+            const result = await Auth.setNewPassword(Auth.traineeName, newPwd);
+            if (!result.ok) { show(result.error, false); return; }
+
+            show("密码已更新，即将跳转登录页…", true);
+            // 延迟退出，让用户看到成功提示后再跳转
+            setTimeout(() => App.logout(), 1500);
+        });
     },
 
     // ==================== 话术练习 ====================

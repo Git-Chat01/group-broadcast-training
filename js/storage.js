@@ -596,6 +596,42 @@ const DB = {
         this.saveTrainees(trainees);
     },
 
+    // ===== 新人密码 =====
+
+    /** 检测新人是否存在（不自动创建，区别于 getTrainee） */
+    traineeExists(name) {
+        const trainees = this.getTrainees();
+        return !!trainees[name];
+    },
+
+    /** 获取新人密码哈希，不存在或旧数据返回 null */
+    getTraineePasswordHash(name) {
+        const trainees = this.getTrainees();
+        const t = trainees[name];
+        if (!t || !t.passwordHash) return null;
+        return t.passwordHash;
+    },
+
+    /** 存储新人密码哈希（首次注册或修改密码时调用） */
+    setTraineePassword(name, hash) {
+        const trainees = this.getTrainees();
+        if (!trainees[name]) {
+            // 首次注册：创建新记录
+            trainees[name] = { moduleProgress: {}, examHistory: [], checklistProgress: {} };
+        }
+        trainees[name].passwordHash = hash;
+        this.saveTrainees(trainees);
+    },
+
+    /** 清除新人密码（培训师重置密码时调用，保留学习数据） */
+    clearTraineePassword(name) {
+        const trainees = this.getTrainees();
+        if (trainees[name]) {
+            delete trainees[name].passwordHash;
+            this.saveTrainees(trainees);
+        }
+    },
+
     /** 重置全部数据 */
     resetAll(defaults) {
         localStorage.clear();

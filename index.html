@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>团播主持新人培训系统</title>
-    <link rel="stylesheet" href="css/style.css?v=24">
+    <link rel="stylesheet" href="css/style.css?v=27">
 </head>
 <body>
 
@@ -18,7 +18,18 @@
             <div class="login-card login-card-main">
                 <div class="login-card-icon">🎤</div>
                 <h3>新人主持入口</h3>
-                <input type="text" class="login-input" id="inputTraineeName" placeholder="请输入你的艺名">
+                <input type="text" class="login-input" id="inputTraineeName" placeholder="请输入你的艺名" autocomplete="off">
+                <div id="loginPasswordGroup" style="display:none;">
+                    <input type="password" class="login-input" id="inputTraineePassword" placeholder="请输入密码" autocomplete="new-password">
+                    <input type="password" class="login-input" id="inputTraineePasswordConfirm" placeholder="确认密码" style="display:none;" autocomplete="new-password">
+                    <div class="password-strength-wrap" id="passwordStrengthWrap" style="display:none;">
+                        <div class="password-strength-bar">
+                            <div class="password-strength-fill" id="passwordStrengthFill"></div>
+                        </div>
+                        <div class="password-strength-label" id="passwordStrengthLabel"></div>
+                    </div>
+                    <div class="password-msg" id="loginPasswordMsg"></div>
+                </div>
                 <button class="btn btn-primary btn-block" id="btnTraineeLogin">进入学习</button>
             </div>
 
@@ -88,15 +99,15 @@
     </div>
 
     <!-- 数据层 -->
-    <script src="js/storage.js?v=24"></script>
-    <script src="js/data.js?v=24"></script>
-    <script src="js/exams_data.js?v=24"></script>
+    <script src="js/storage.js?v=27"></script>
+    <script src="js/data.js?v=27"></script>
+    <script src="js/exams_data.js?v=27"></script>
     <!-- 业务模块（按依赖顺序加载） -->
-    <script src="js/auth.js?v=24"></script>
-    <script src="js/cognition.js?v=24"></script>
-    <script src="js/trainee.js?v=24"></script>
-    <script src="js/import.js?v=24"></script>
-    <script src="js/trainer.js?v=24"></script>
-    <script src="js/app.js?v=24"></script>
+    <script src="js/auth.js?v=27"></script>
+    <script src="js/cognition.js?v=27"></script>
+    <script src="js/trainee.js?v=27"></script>
+    <script src="js/import.js?v=27"></script>
+    <script src="js/trainer.js?v=27"></script>
+    <script src="js/app.js?v=27"></script>
 </body>
 </html>

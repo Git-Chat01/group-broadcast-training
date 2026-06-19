@@ -116,6 +116,47 @@ body {
 }
 .login-hint { font-size: 13px; color: #E17055; }
 
+/* 密码强度指示器 */
+.password-strength-wrap {
+    margin-bottom: 12px;
+}
+.password-strength-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+.password-strength-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease, background 0.3s ease;
+    width: 0%;
+}
+.password-strength-fill.strength-low { background: var(--danger); }
+.password-strength-fill.strength-medium { background: var(--warning); }
+.password-strength-fill.strength-high { background: var(--success); }
+.password-strength-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    padding-left: 2px;
+}
+.password-strength-label.strength-low { color: var(--danger); }
+.password-strength-label.strength-medium { color: var(--warning); }
+.password-strength-label.strength-high { color: var(--success); }
+
+/* 登录表单密码消息 */
+.password-msg {
+    font-size: 13px;
+    margin-bottom: 8px;
+    text-align: center;
+    display: none;
+}
+.password-msg.error { color: var(--danger); display: block; }
+.password-msg.info { color: var(--text-secondary); display: block; }
+.password-msg.success { color: var(--success); display: block; }
+
 /* ========== 顶部栏 ========== */
 .header {
     display: flex;

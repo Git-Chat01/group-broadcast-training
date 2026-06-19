@@ -17,6 +17,9 @@ const Modal = {
 // ===== 主应用 =====
 const App = {
 
+    /** 登录流程状态：null | "login" | "setup" */
+    _loginState: null,
+
     init() {
         // 1. 初始化数据
         DB.init(Defaults);
@@ -72,23 +75,98 @@ const App = {
             document.getElementById("btnToggleTrainer").textContent = isHidden ? "培训师管理 ▲" : "培训师管理";
         });
 
-        // 新人登录
-        document.getElementById("btnTraineeLogin").addEventListener("click", () => {
-            const name = document.getElementById("inputTraineeName").value;
-            const result = Auth.loginAsTrainee(name);
-            if (!result.ok) {
-                alert(result.error);
-                return;
+        // —— 新人登录（异步密码验证） ——
+
+        // 输入艺名 → 展开密码区
+        document.getElementById("inputTraineeName").addEventListener("input", () => {
+            const name = document.getElementById("inputTraineeName").value.trim();
+            const pwGroup = document.getElementById("loginPasswordGroup");
+            const btn = document.getElementById("btnTraineeLogin");
+            if (name.length > 0) {
+                pwGroup.style.display = "block";
+                btn.disabled = false;
+            } else {
+                pwGroup.style.display = "none";
+                btn.disabled = true;
             }
-            document.getElementById("traineeNameDisplay").textContent = name;
-            this.showView("trainee");
-            this.bindTraineeTabs();
-            this.switchTraineeTab("cognition");
+            // 换名字 → 重置为登录模式
+            this._resetToLoginMode();
         });
 
-        // 回车快捷登录
-        document.getElementById("inputTraineeName").addEventListener("keydown", (e) => {
-            if (e.key === "Enter") document.getElementById("btnTraineeLogin").click();
+        // 输入密码 → 强度实时更新
+        document.getElementById("inputTraineePassword").addEventListener("input", (e) => {
+            const pwd = e.target.value;
+            const wrap = document.getElementById("passwordStrengthWrap");
+            if (pwd.length > 0) {
+                wrap.style.display = "block";
+                const s = Auth.evaluatePasswordStrength(pwd);
+                const fill = document.getElementById("passwordStrengthFill");
+                fill.style.width = s.pct + "%";
+                fill.className = "password-strength-fill strength-" + s.level;
+                const lbl = document.getElementById("passwordStrengthLabel");
+                lbl.textContent = "密码强度：" + s.label;
+                lbl.className = "password-strength-label strength-" + s.level;
+            } else {
+                wrap.style.display = "none";
+            }
+        });
+
+        // 登录按钮 — 三场景分发
+        document.getElementById("btnTraineeLogin").addEventListener("click", async () => {
+            const name = document.getElementById("inputTraineeName").value.trim();
+            const pwd = document.getElementById("inputTraineePassword").value;
+            const confirmEl = document.getElementById("inputTraineePasswordConfirm");
+            const msgEl = document.getElementById("loginPasswordMsg");
+            const btn = document.getElementById("btnTraineeLogin");
+
+            const showMsg = (text, cls) => {
+                msgEl.textContent = text;
+                msgEl.className = "password-msg " + cls;
+            };
+
+            // 校验艺名
+            if (!name) { alert("请输入艺名"); return; }
+            // 校验密码非空
+            if (!pwd) { showMsg("请输入密码", "error"); return; }
+
+            // 判断账号状态
+            const exists = DB.traineeExists(name);
+            const hasHash = exists && DB.getTraineePasswordHash(name);
+
+            if (exists && hasHash) {
+                // === 场景 B：已有密码的老用户 ===
+                const ok = await Auth.verifyPassword(name, pwd);
+                if (!ok) { showMsg("密码错误", "error"); return; }
+                this._completeTraineeLogin(name);
+
+            } else if (this._loginState !== "setup") {
+                // === 首次点击：进入注册/设置模式 ===
+                this._loginState = "setup";
+                confirmEl.style.display = "block";
+                // 展示强度条
+                const wrap = document.getElementById("passwordStrengthWrap");
+                if (pwd.length > 0) wrap.style.display = "block";
+                btn.textContent = "设置密码并进入";
+                const msg = exists ? "首次登录，请设置密码" : "新账号，请设置密码";
+                showMsg(msg, "info");
+
+            } else {
+                // === 第二次点击：确认注册/设置 ===
+                const confirmPwd = confirmEl.value;
+                if (pwd.length < 6) { showMsg("密码至少6位", "error"); return; }
+                if (pwd !== confirmPwd) { showMsg("两次输入的密码不一致", "error"); return; }
+
+                const result = await Auth.setNewPassword(name, pwd);
+                if (!result.ok) { showMsg(result.error, "error"); return; }
+                this._completeTraineeLogin(name);
+            }
+        });
+
+        // 回车快捷登录（三个输入框都触发按钮点击）
+        ["inputTraineeName", "inputTraineePassword", "inputTraineePasswordConfirm"].forEach(id => {
+            document.getElementById(id).addEventListener("keydown", (e) => {
+                if (e.key === "Enter") document.getElementById("btnTraineeLogin").click();
+            });
         });
 
         // 培训师登录
@@ -116,8 +194,50 @@ const App = {
         document.getElementById("btnTrainerLogout").addEventListener("click", () => this.logout());
     },
 
+    /** 完成新人登录：切视图 + 渲染第一个 Tab */
+    _completeTraineeLogin(name) {
+        const result = Auth.loginAsTrainee(name);
+        if (!result.ok) return;
+        document.getElementById("traineeNameDisplay").textContent = Auth.traineeName;
+        this._resetLoginUI();
+        this.showView("trainee");
+        this.bindTraineeTabs();
+        this.switchTraineeTab("cognition");
+    },
+
+    /** 重置登录 UI 到初始状态（退出或登录成功后调用） */
+    _resetLoginUI() {
+        this._loginState = null;
+        document.getElementById("loginPasswordGroup").style.display = "none";
+        document.getElementById("inputTraineeName").value = "";
+        document.getElementById("inputTraineePassword").value = "";
+        const confirmEl = document.getElementById("inputTraineePasswordConfirm");
+        confirmEl.style.display = "none";
+        confirmEl.value = "";
+        document.getElementById("passwordStrengthWrap").style.display = "none";
+        const msgEl = document.getElementById("loginPasswordMsg");
+        msgEl.textContent = "";
+        msgEl.className = "password-msg";
+        const btn = document.getElementById("btnTraineeLogin");
+        btn.textContent = "进入学习";
+        btn.disabled = true;
+    },
+
+    /** 从设置模式回到登录模式（换名字时调用） */
+    _resetToLoginMode() {
+        if (this._loginState !== "setup") return;
+        this._loginState = null;
+        document.getElementById("inputTraineePasswordConfirm").style.display = "none";
+        document.getElementById("inputTraineePasswordConfirm").value = "";
+        const msgEl = document.getElementById("loginPasswordMsg");
+        msgEl.textContent = "";
+        msgEl.className = "password-msg";
+        document.getElementById("btnTraineeLogin").textContent = "进入学习";
+    },
+
     logout() {
         Auth.logout();
+        this._resetLoginUI();
         this.showView("login");
         document.getElementById("inputAdminPassword").value = "";
         document.getElementById("loginError").style.display = "none";
