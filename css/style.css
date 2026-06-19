@@ -14,9 +14,12 @@
     --warning: #FF9500;
     --warning-light: #FFF3E6;
     --text: #1D1D1F;
+    --text-primary: #1D1D1F;   /* 话术区块主文字（= --text 别名，保持向后兼容） */
     --text-secondary: #6E6E73;
     --text-muted: #AEAEB2;
     --bg: #F5F5F7;
+    --bg-card: #FFFFFF;        /* 话术区块卡片背景（= --card 别名） */
+    --bg-secondary: #F2F2F7;   /* 次级背景（卡片嵌套/示例区） */
     --card: #FFFFFF;
     --border: #E5E5EA;
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);

@@ -751,11 +751,7 @@ const Trainer = {
         `);
     },
 
-    // ===== 工具方法 =====
-    escAttr(str) {
-        return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    },
-    escHtml(str) {
-        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
+    // ===== 工具方法（委托到 storage.js 统一 escapeHtml） =====
+    escAttr(str) { return escapeHtml(str); },
+    escHtml(str)  { return escapeHtml(str); }
 };

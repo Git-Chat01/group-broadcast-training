@@ -418,11 +418,8 @@ const Trainee = {
         });
     },
 
-    escapeHtml(str) {
-        const d = document.createElement("div");
-        d.textContent = str || "";
-        return d.innerHTML;
-    },
+    // 委托到 storage.js 中的统一 escapeHtml 函数
+    escapeHtml(str) { return escapeHtml(str); },
 
     /**
      * 图片缩放 — 用全屏遮罩替代 position:fixed 切换，避免页面抖动

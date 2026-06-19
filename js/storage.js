@@ -3,6 +3,19 @@
    所有数据读写统一走此模块，方便后续换后端
    ============================================ */
 
+/**
+ * HTML 转义工具 — 项目唯一的转义函数
+ * 使用 DOM API 完整转义所有 HTML 特殊字符（& < > " '），
+ * 同时适用于 HTML 正文和属性值场景。
+ * Trainee.escapeHtml / Trainer.escHtml / Trainer.escAttr 均委托至此。
+ */
+function escapeHtml(str) {
+    if (!str) return "";
+    const div = document.createElement("div");
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
 const DB = {
 
     /**
