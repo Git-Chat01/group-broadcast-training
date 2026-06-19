@@ -56,56 +56,62 @@ const DB = {
     },
 
     /**
-     * 智能合并模块：
-     * - 新模块（ID 不存在）→ 自动添加
-     * - 已有模块 → 用默认数据更新 content/title/hasExam/examId
-     * - 已废弃模块（不在默认列表中）→ 自动删除
+     * 通用数组智能合并 — 按 ID 匹配合并，消除 4 个 _merge* 的重复代码
+     * @param {Array} existing - 已有数据数组
+     * @param {Array} defaults - 默认数据数组
+     * @param {Function} updateFn - 已有项更新回调 (old, new) => void
+     * @param {boolean} deleteRemoved - 是否删除默认列表中不存在的项
+     * @returns {boolean} 是否发生变更
      */
-    _mergeModules(defaultModules) {
-        const existing = this.getModules();
-        const defaultIds = new Set(defaultModules.map(m => m.id));
-
-        // 删除已废弃的模块（不在新默认列表中的）
-        let filtered = existing.filter(m => defaultIds.has(m.id));
-        if (filtered.length !== existing.length) {
-            existing.length = 0;
-            existing.push(...filtered);
+    _mergeArrayById(existing, defaults, updateFn, deleteRemoved) {
+        let changed = false;
+        if (deleteRemoved) {
+            const defaultIds = new Set(defaults.map(m => m.id));
+            const filtered = existing.filter(m => defaultIds.has(m.id));
+            if (filtered.length !== existing.length) {
+                existing.length = 0;
+                existing.push(...filtered);
+                changed = true;
+            }
         }
-
         const existingMap = new Map(existing.map(m => [m.id, m]));
-
-        defaultModules.forEach(dm => {
-            const old = existingMap.get(dm.id);
+        defaults.forEach(d => {
+            const old = existingMap.get(d.id);
             if (!old) {
-                // 新模块：直接添加
-                existing.push(dm);
+                existing.push(d);
+                changed = true;
             } else {
-                // 已有模块：用默认内容覆盖
-                old.title = dm.title;
-                old.content = dm.content;
-                old.hasExam = dm.hasExam;
-                old.examId = dm.examId;
+                updateFn(old, d);
+                changed = true;
             }
         });
-
-        this.saveModules(existing);
+        return changed;
     },
 
     /**
-     * 智能合并试卷：
-     * - 新试卷（ID 不存在）→ 自动添加
-     * - 已有试卷 → 用默认数据覆盖题目（确保图片等更新生效）
-     *   考试记录存储在 trainees 中，覆盖试卷定义不会丢失成绩
+     * 智能合并模块：
+     * - 新模块 → 添加 / 已有 → 覆盖 / 废弃 → 删除
+     */
+    _mergeModules(defaultModules) {
+        const existing = this.getModules();
+        if (this._mergeArrayById(existing, defaultModules, (old, dm) => {
+            old.title = dm.title;
+            old.content = dm.content;
+            old.hasExam = dm.hasExam;
+            old.examId = dm.examId;
+        }, true)) {
+            this.saveModules(existing);
+        }
+    },
+
+    /**
+     * 智能合并试卷：直接覆盖（保留成绩数据在 trainees 中）
      */
     _mergeExams(defaultExams) {
         const existing = this.getExams();
         let changed = false;
         Object.keys(defaultExams).forEach(eid => {
-            if (!existing[eid]) {
-                existing[eid] = defaultExams[eid];
-                changed = true;
-            } else {
-                // 已有试卷：覆盖题目数据使图片等更新生效
+            if (!existing[eid] || JSON.stringify(existing[eid]) !== JSON.stringify(defaultExams[eid])) {
                 existing[eid] = defaultExams[eid];
                 changed = true;
             }
@@ -114,88 +120,47 @@ const DB = {
     },
 
     /**
-     * 智能合并清单：
-     * - 新项（ID 不存在）→ 自动添加
-     * - 已有项 → 用默认数据更新 category/item 文本
-     * - 已删除的项保留（培训师可能已习惯某项）
+     * 智能合并清单：新项添加 / 已有更新文本 / 不删旧项
      */
     _mergeChecklist(defaultChecklist) {
         const existing = this.getChecklist();
-        const existingMap = new Map(existing.map(m => [m.id, m]));
-        let changed = false;
-
-        defaultChecklist.forEach(dm => {
-            const old = existingMap.get(dm.id);
-            if (!old) {
-                existing.push(dm);
-                changed = true;
-            } else {
-                old.category = dm.category;
-                old.item = dm.item;
-                changed = true;
-            }
-        });
-
-        if (changed) this.saveChecklist(existing);
+        if (this._mergeArrayById(existing, defaultChecklist, (old, dm) => {
+            old.category = dm.category;
+            old.item = dm.item;
+        })) {
+            this.saveChecklist(existing);
+        }
     },
 
     /**
-     * 智能合并话术模板：
-     * - 新模板（ID 不存在）→ 自动添加
-     * - 已有模板 → 用默认数据更新所有字段
-     * ⚠️ 绝不删除已有模板 —— 即使某个模板从 Defaults 中移除，
-     *    也要保留在 localStorage 中，因为可能有新人的话术版本数据关联此 ID。
-     *    删除模板 ID 会导致新人的话术数据变成"孤儿数据"无法访问。
+     * 智能合并话术模板：新添 / 更新 / 绝不删除（有新人版本数据关联）
      */
     _mergeScriptTemplates(defaultTemplates) {
         const existing = this.getScriptTemplates();
-        const existingMap = new Map(existing.map(m => [m.id, m]));
-        let changed = false;
-
-        defaultTemplates.forEach(dt => {
-            const old = existingMap.get(dt.id);
-            if (!old) {
-                existing.push(dt);
-                changed = true;
-            } else {
-                old.category = dt.category;
-                old.scene = dt.scene;
-                old.goal = dt.goal;
-                old.logic = dt.logic;
-                old.examples = dt.examples;
-                old.tips = dt.tips;
-                changed = true;
-            }
-        });
-
-        if (changed) this.saveScriptTemplates(existing);
+        if (this._mergeArrayById(existing, defaultTemplates, (old, dt) => {
+            old.category = dt.category;
+            old.scene = dt.scene;
+            old.goal = dt.goal;
+            old.logic = dt.logic;
+            old.examples = dt.examples;
+            old.tips = dt.tips;
+        })) {
+            this.saveScriptTemplates(existing);
+        }
     },
 
     /**
-     * 智能合并团播认知：
-     * - 新卡片（ID 不存在）→ 自动添加
-     * - 已有卡片 → 用默认数据更新 title/content/scenario
-     * - 已删除的卡片保留（不主动删数据）
+     * 智能合并团播认知：新卡片添加 / 已有更新 / 不删旧卡片
      */
     _mergeCognition(defaultCards) {
         const existing = this.getCognition();
-        const existingMap = new Map(existing.map(m => [m.id, m]));
-        let changed = false;
-
-        defaultCards.forEach(dc => {
-            const old = existingMap.get(dc.id);
-            if (!old) {
-                existing.push(dc);
-                changed = true;
-            } else {
-                old.title = dc.title;
-                old.content = dc.content;
-                old.scenario = dc.scenario;
-                changed = true;
-            }
-        });
-
-        if (changed) this.saveCognition(existing);
+        if (this._mergeArrayById(existing, defaultCards, (old, dc) => {
+            old.title = dc.title;
+            old.content = dc.content;
+            old.scenario = dc.scenario;
+        })) {
+            this.saveCognition(existing);
+        }
     },
 
     // ===== 管理密码 =====
@@ -338,7 +303,7 @@ const DB = {
             const total = Math.round(scriptScore * 0.5 + examScore * 0.3 + clScore * 0.2);
 
             // 上榜门槛
-            const examPassed = history.filter(r => r.score >= 60).length;
+            const examPassed = history.filter(r => r.score >= PASS_THRESHOLD).length;
             const qualified = scriptDone >= 3 || examPassed >= 1;
 
             // 排名变化（对比上次快照）
@@ -601,16 +566,6 @@ const DB = {
             sc.feedbackRead = true;
             this.saveTrainees(trainees);
         }
-    },
-
-    /** 检查是否有未读批注（返回未读数量） */
-    countUnreadFeedback(name) {
-        const allScripts = this.getScripts(name);
-        let count = 0;
-        Object.keys(allScripts).forEach(tid => {
-            if (allScripts[tid].feedbackRead === false) count++;
-        });
-        return count;
     },
 
     /** 添加考试记录 */

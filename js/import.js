@@ -5,9 +5,6 @@
 
 const Importer = {
 
-    /** 解析结果缓存 */
-    parsedQuestions: [],
-
     /**
      * 读取用户选择的文件并解析
      * @param {File} file - 上传的文件对象
@@ -51,7 +48,6 @@ const Importer = {
                 }
             });
 
-            this.parsedQuestions = questions;
             return { ok: true, questions, imageCount: imageFiles.length };
         } catch (e) {
             return { ok: false, error: "文件解析失败：" + e.message };
@@ -74,7 +70,6 @@ const Importer = {
                 if (q) questions.push(q);
             }
 
-            this.parsedQuestions = questions;
             return { ok: true, questions };
         } catch (e) {
             return { ok: false, error: "Excel 解析失败：" + e.message };

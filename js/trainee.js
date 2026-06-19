@@ -531,15 +531,15 @@ const Trainee = {
 
     showResult(score, correctCount, total, details) {
         const container = document.getElementById("trainee-panel-exam");
-        const passClass = score >= 60 ? "pass" : "fail";
-        const passText = score >= 60 ? "合格" : "不合格";
-        const enc = score >= 80 ? "非常优秀！" : score >= 60 ? "通过了，继续加油！" : "别气馁，复习后再来！";
+        const passClass = score >= PASS_THRESHOLD ? "pass" : "fail";
+        const passText = score >= PASS_THRESHOLD ? "合格" : "不合格";
+        const enc = score >= 80 ? "非常优秀！" : score >= PASS_THRESHOLD ? "通过了，继续加油！" : "别气馁，复习后再来！";
 
         container.innerHTML = `
             <div style="text-align:center;padding:24px 0;">
                 <h2>考试完成</h2>
                 <div class="result-score ${passClass}">${score}<span style="font-size:24px;">分</span></div>
-                <p style="margin:8px 0;"><span class="badge ${score >= 60 ? 'badge-done' : 'badge-pending'}">${passText}</span></p>
+                <p style="margin:8px 0;"><span class="badge ${score >= PASS_THRESHOLD ? 'badge-done' : 'badge-pending'}">${passText}</span></p>
                 <p>答对 <strong>${correctCount}</strong> / ${total} 题 · ${enc}</p>
                 <div style="text-align:left;margin-top:24px;">
                     <h3 style="margin-bottom:12px;">答题详情</h3>
@@ -573,7 +573,7 @@ const Trainee = {
         const trainee = DB.getTrainee(Auth.traineeName);
         const history = trainee.examHistory || [];
 
-        const passedExams = new Set(history.filter(r => r.score >= 60).map(r => r.examId)).size;
+        const passedExams = new Set(history.filter(r => r.score >= PASS_THRESHOLD).map(r => r.examId)).size;
         const totalExams = Object.keys(DB.getExams()).length;
 
         const avgScore = history.length > 0
@@ -698,7 +698,7 @@ const Trainee = {
                     <table class="data-table">
                         <thead><tr><th>试卷</th><th>成绩</th><th>答对</th><th>时间</th></tr></thead>
                         <tbody>${history.map(r => {
-                            const sc = r.score >= 60 ? 'style="color:#34C759;"' : 'style="color:#FF3B30;"';
+                            const sc = r.score >= PASS_THRESHOLD ? 'style="color:#34C759;"' : 'style="color:#FF3B30;"';
                             return `<tr><td>${r.examTitle}</td><td ${sc}><strong>${r.score}分</strong></td><td>${r.correctCount}/${r.total}</td><td>${r.date}</td></tr>`;
                         }).join("")}</tbody>
                     </table>`}

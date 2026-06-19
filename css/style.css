@@ -305,46 +305,6 @@ body {
 .modal-body { padding: 24px; overflow-y: auto; flex: 1; line-height: 1.8; }
 .modal-body img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
 
-/* 培训截图区域 */
-.screenshot-section {
-    margin: 24px 0 16px;
-    padding: 16px;
-    background: #FAFAFA;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-}
-.screenshot-label {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-}
-.screenshot-img {
-    display: block;
-    max-width: 100%;
-    margin: 12px 0;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-.screenshot-img:hover {
-    transform: scale(1.01);
-    box-shadow: var(--shadow);
-}
-.screenshot-img.zoomed {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 92vw;
-    max-height: 92vh;
-    z-index: 200;
-    box-shadow: var(--shadow-lg);
-    border-radius: var(--radius);
-}
 .modal-footer {
     padding: 16px 24px;
     border-top: 1px solid var(--border);
@@ -544,10 +504,6 @@ body {
 .empty-state { text-align: center; color: var(--text-muted); padding: 40px; font-size: 15px; }
 
 /* ========== 培训师端 ========== */
-.section-title {
-    font-size: 16px; font-weight: 700; margin-bottom: 12px;
-    padding-bottom: 8px; border-bottom: 2px solid var(--border);
-}
 .form-group { margin-bottom: 14px; }
 .form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
 .form-input, .form-textarea, .form-select {
@@ -1676,31 +1632,6 @@ body {
 .script-section.tips li::marker {
     color: var(--primary);
     opacity: 0.5;
-}
-
-/* --- 培训师批注 --- */
-.feedback-block {
-    margin: 0 12px 16px 12px;
-    padding: 16px;
-    background: #FFFBF0;
-    border-left: 3px solid #FF9500;
-    border-radius: 0 10px 10px 0;
-}
-.feedback-block-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #E08600;
-    margin-bottom: 8px;
-}
-.feedback-block-text {
-    font-size: 14px;
-    color: var(--text-primary);
-    line-height: 1.7;
-}
-.feedback-block-meta {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 8px;
 }
 
 /* --- 底部固定输入栏 --- */

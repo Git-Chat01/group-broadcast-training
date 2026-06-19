@@ -410,7 +410,7 @@ const Trainer = {
                     const avgScore = history.length > 0
                         ? Math.round(history.reduce((s, r) => s + r.score, 0) / history.length)
                         : 0;
-                    const passed = history.filter(r => r.score >= 60).length;
+                    const passed = history.filter(r => r.score >= PASS_THRESHOLD).length;
                     const clMastered = checklist.filter(c => clProgress[c.id] === "mastered").length;
                     const templates = DB.getScriptTemplates();
                     const scripts = DB.getScripts(name);
@@ -451,7 +451,7 @@ const Trainer = {
                                 <table class="data-table" style="margin-top:12px;">
                                     <thead><tr><th>试卷</th><th>成绩</th><th>答对</th><th>时间</th></tr></thead>
                                     <tbody>${history.slice(0, 10).map(r => {
-                                        const sc = r.score >= 60 ? 'style="color:#34C759;"' : 'style="color:#FF3B30;"';
+                                        const sc = r.score >= PASS_THRESHOLD ? 'style="color:#34C759;"' : 'style="color:#FF3B30;"';
                                         return `<tr><td>${r.examTitle}</td><td ${sc}><strong>${r.score}分</strong></td><td>${r.correctCount}/${r.total}</td><td>${r.date}</td></tr>`;
                                     }).join("")}</tbody>
                                 </table>
@@ -645,7 +645,7 @@ const Trainer = {
                     String(r.score),
                     String(r.correctCount),
                     String(r.total),
-                    r.score >= 60 ? "合格" : "不合格",
+                    r.score >= PASS_THRESHOLD ? "合格" : "不合格",
                     r.date || ""
                 ]);
             });

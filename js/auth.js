@@ -100,9 +100,4 @@ const Auth = {
         this.role = null;
         this.traineeName = "";
     },
-
-    /** 是否已登录 */
-    isLoggedIn() {
-        return this.role !== null;
-    }
 };
