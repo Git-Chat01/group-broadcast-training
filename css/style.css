@@ -117,7 +117,7 @@ body {
     font-size: 14px;
     padding: 8px 12px;
 }
-.login-hint { font-size: 13px; color: #E17055; }
+.login-hint { font-size: 13px; color: #D35400; }  /* 加深以提升对比度 */
 
 /* 密码强度指示器 */
 .password-strength-wrap {
@@ -239,7 +239,7 @@ body {
     font-weight: 600;
 }
 .badge-done { background: var(--success-light); color: #1A7A36; }
-.badge-pending { background: var(--warning-light); color: #B36500; }
+.badge-pending { background: var(--warning-light); color: #9A5600; }  /* 加深以提升对比度 */
 .badge-info { background: var(--primary-light); color: var(--primary-dark); }
 
 /* ========== 按钮 ========== */
@@ -1517,7 +1517,7 @@ body {
 }
 .script-section.logic .script-section-text {
     font-size: 14px;
-    color: #5C5C6E;
+    color: #4A4A5A;  /* 加深以提升对比度 */
     line-height: 1.85;
 }
 
@@ -1571,12 +1571,12 @@ body {
     padding: 10px 0 2px;
 }
 .script-example-nav button {
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 1.5px solid rgba(0,0,0,0.12);
     background: var(--bg-card);
-    font-size: 16px;
+    font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1680,7 +1680,7 @@ body {
     background: #fff;
 }
 .script-input-bar textarea::placeholder {
-    color: #B0B0B8;
+    color: #8E8E93;  /* 加深以提升对比度 */
     font-size: 13px;
 }
 .script-input-actions {
@@ -1700,7 +1700,7 @@ body {
 }
 .btn-script-draft {
     background: #F2F2F7;
-    color: #6E6E7A;
+    color: #5C5C6E;  /* 加深以提升对比度 */
 }
 .btn-script-draft:active {
     background: #E5E5EA;

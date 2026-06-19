@@ -509,7 +509,7 @@ const Trainer = {
             const catId = "tsc-" + catName.replace(/[^a-zA-Z0-9一-龥]/g, "");
             catsHTML += `
                 <div class="script-category">
-                    <div class="script-cat-header" onclick="Trainee.toggleCategory('${catId}')">
+                    <div class="script-cat-header" onclick="toggleAccordion('${catId}')">
                         <span class="script-cat-arrow" id="${catId}-arrow">${first ? "▼" : "▶"}</span>
                         <span class="script-cat-name">${catName}</span>
                     </div>

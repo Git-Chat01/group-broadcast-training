@@ -227,26 +227,8 @@ const Trainee = {
         if (fillEl) fillEl.style.width = pct + "%";
     },
 
-    /** 手风琴折叠（清单+话术共用） */
-    toggleCategory(catId) {
-        const body = document.getElementById(catId + "-body");
-        const arrow = document.getElementById(catId + "-arrow");
-        if (!body || !arrow) return;
-
-        const isScript = body.classList.contains("script-cat-body");
-        const bodySel = isScript ? ".script-cat-body" : ".checklist-cat-body";
-        const arrowSel = isScript ? ".script-cat-arrow" : ".checklist-cat-arrow";
-
-        if (body.style.display === "none") {
-            document.querySelectorAll(bodySel).forEach(b => b.style.display = "none");
-            document.querySelectorAll(arrowSel).forEach(a => a.textContent = "▶");
-            body.style.display = "";
-            arrow.textContent = "▼";
-        } else {
-            body.style.display = "none";
-            arrow.textContent = "▶";
-        }
-    },
+    /** 手风琴折叠 — 委托到 storage.js 统一实现 */
+    toggleCategory(catId) { toggleAccordion(catId); },
 
     // ==================== 试卷考试 ====================
 

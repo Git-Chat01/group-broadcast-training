@@ -16,6 +16,28 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+/**
+ * 手风琴折叠工具 — 清单和话术分类共用
+ * 由 Trainee.toggleCategory 委托，Trainer 直接调用，消除跨模块耦合
+ */
+function toggleAccordion(catId) {
+    const body = document.getElementById(catId + "-body");
+    const arrow = document.getElementById(catId + "-arrow");
+    if (!body || !arrow) return;
+    const isScript = body.classList.contains("script-cat-body");
+    const bodySel = isScript ? ".script-cat-body" : ".checklist-cat-body";
+    const arrowSel = isScript ? ".script-cat-arrow" : ".checklist-cat-arrow";
+    if (body.style.display === "none") {
+        document.querySelectorAll(bodySel).forEach(b => b.style.display = "none");
+        document.querySelectorAll(arrowSel).forEach(a => a.textContent = "▶");
+        body.style.display = "";
+        arrow.textContent = "▼";
+    } else {
+        body.style.display = "none";
+        arrow.textContent = "▶";
+    }
+}
+
 const DB = {
 
     /**
