@@ -11,12 +11,9 @@ const Trainee = {
 
     // ==================== 培训模块 ====================
 
-    /** 渲染模块列表 */
+    /** 渲染软硬件自检面板 */
     renderStudyPanel() {
         const container = document.getElementById("trainee-panel-study");
-        const modules = DB.getModules();
-        const trainee = DB.getTrainee(Auth.traineeName);
-        const progress = trainee.moduleProgress || {};
 
         // 能力清单概况
         const checklist = DB.getChecklist();
@@ -41,61 +38,7 @@ const Trainee = {
             </div>
         ` : '';
 
-        container.innerHTML = checklistCardHTML + (modules.length === 0
-            ? '<p class="empty-state">暂无培训模块，请联系培训师添加</p>'
-            : modules.map(mod => {
-            const done = progress[mod.id] === true;
-            return `
-                <div class="card card-row">
-                    <div>
-                        <div class="card-title">
-                            ${mod.title}
-                            ${done ? '<span class="badge badge-done">已完成</span>' : '<span class="badge badge-pending">未完成</span>'}
-                            ${mod.hasExam ? '<span class="badge badge-info">含考核</span>' : ''}
-                        </div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                        <button class="btn btn-primary btn-sm" onclick="Trainee.openStudy('${mod.id}')">开始学习</button>
-                    </div>
-                </div>
-            `;
-        }).join(""));
-    },
-
-    /** 打开培训内容弹窗 */
-    openStudy(moduleId) {
-        const mod = DB.getModules().find(m => m.id === moduleId);
-        const trainee = DB.getTrainee(Auth.traineeName);
-        const done = (trainee.moduleProgress || {})[moduleId] === true;
-        if (!mod) return;
-
-        Modal.show(`
-            <div class="modal-header">
-                <h2 class="modal-title">${mod.title}</h2>
-                <button class="modal-close" onclick="Modal.hide()">&times;</button>
-            </div>
-            <div class="modal-body">${mod.content}</div>
-            <div class="modal-footer">
-                ${mod.hasExam ? `<button class="btn btn-primary" onclick="Modal.hide();Trainee.startExam('${mod.examId}');App.switchTraineeTab('exam')">参加考试</button>` : ''}
-                <button class="btn btn-success" ${done ? 'disabled' : ''} id="btnMarkDone" data-module-id="${moduleId}">
-                    ${done ? '✓ 已完成' : '标记为已完成'}
-                </button>
-                <button class="btn btn-outline" onclick="Modal.hide()">关闭</button>
-            </div>
-        `);
-
-        // 绑定标记完成按钮
-        const btn = document.getElementById("btnMarkDone");
-        if (btn && !done) {
-            btn.addEventListener("click", function() {
-                const mid = this.dataset.moduleId;
-                DB.setModuleProgress(Auth.traineeName, mid, true);
-                this.textContent = "✓ 已完成";
-                this.disabled = true;
-                Trainee.renderStudyPanel();
-                Trainee.renderProgressPanel();
-            });
-        }
+        container.innerHTML = checklistCardHTML;
     },
 
     // ==================== 能力清单 ====================
