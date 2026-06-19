@@ -83,7 +83,7 @@ const App = {
             document.getElementById("traineeNameDisplay").textContent = name;
             this.showView("trainee");
             this.bindTraineeTabs();
-            this.switchTraineeTab("study");
+            this.switchTraineeTab("cognition");
         });
 
         // 回车快捷登录
@@ -144,6 +144,7 @@ const App = {
             p.classList.toggle("active", p.id === "trainee-panel-" + tabName);
         });
         // 渲染对应内容
+        if (tabName === "cognition") Cognition.renderPanel();
         if (tabName === "study") Trainee.renderStudyPanel();
         if (tabName === "exam") Trainee.renderExamPanel();
         if (tabName === "script") Trainee.renderScriptPanel();

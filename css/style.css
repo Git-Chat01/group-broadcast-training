@@ -652,6 +652,217 @@ body {
     text-align: center;
 }
 
+/* ========== 团播认知 ========== */
+
+/* -- 顶部引导语 -- */
+.cog-hero {
+    text-align: center;
+    padding: 32px 16px 20px;
+}
+.cog-hero-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.cog-hero-sub {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* -- 卡片堆叠 -- */
+.cog-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 32px;
+}
+
+/* -- 单张认知卡片 -- */
+.cog-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    transition: box-shadow 0.2s;
+}
+.cog-card:hover { box-shadow: var(--shadow); }
+
+/* -- 序号标记 -- */
+.cog-card-marker {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #FFF;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(91,141,239,0.3);
+}
+
+/* -- 卡片标题 -- */
+.cog-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+    padding-left: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+/* -- 卡片正文 -- */
+.cog-card-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+.cog-card-body p {
+    margin-bottom: 12px;
+}
+.cog-card-body ul,
+.cog-card-body ol {
+    margin: 0 0 12px 20px;
+}
+.cog-card-body li {
+    margin-bottom: 6px;
+}
+.cog-card-body strong {
+    color: var(--text);
+}
+
+/* -- 场景判断区域 -- */
+.cog-scenario {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border);
+}
+.cog-scenario-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--warning);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+.cog-scenario-question {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 14px;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+/* -- 选项按钮 -- */
+.cog-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.cog-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    color: var(--text);
+    min-height: 44px;
+}
+.cog-option:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.cog-option:active {
+    transform: scale(0.98);
+}
+.cog-option:disabled {
+    cursor: default;
+    pointer-events: none;
+}
+
+/* -- 选项字母标 -- */
+.cog-option-letter {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.cog-option:hover .cog-option-letter {
+    background: var(--primary);
+    color: #FFF;
+}
+
+/* -- 选项判定态 -- */
+.cog-option-correct {
+    border-color: var(--success) !important;
+    background: var(--success-light) !important;
+}
+.cog-option-correct .cog-option-letter {
+    background: var(--success);
+    color: #FFF;
+}
+.cog-option-wrong {
+    border-color: var(--danger) !important;
+    background: var(--danger-light) !important;
+}
+.cog-option-wrong .cog-option-letter {
+    background: var(--danger);
+    color: #FFF;
+}
+
+/* -- 反馈区域 -- */
+.cog-feedback {
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    animation: cogFadeIn 0.3s ease;
+}
+@keyframes cogFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.cog-feedback-ok {
+    background: var(--success-light);
+    border: 1px solid var(--success);
+}
+.cog-feedback-err {
+    background: var(--danger-light);
+    border: 1px solid var(--danger);
+}
+.cog-feedback-icon {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.cog-feedback-ok .cog-feedback-icon { color: #1A7A36; }
+.cog-feedback-err .cog-feedback-icon { color: var(--danger); }
+.cog-feedback-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
 /* ========== 响应式：手机端适配（≤600px） ========== */
 @media (max-width: 600px) {
 
@@ -805,6 +1016,21 @@ body {
         gap: 6px;
     }
 
+    /* -- 团播认知 -- */
+    .cog-hero { padding: 24px 12px 16px; }
+    .cog-hero-title { font-size: 19px; }
+    .cog-hero-sub { font-size: 13px; }
+    .cog-card { padding: 20px 16px; }
+    .cog-card-marker {
+        top: -8px; left: -8px;
+        width: 28px; height: 28px;
+        font-size: 13px;
+    }
+    .cog-card-title { font-size: 16px; }
+    .cog-card-body { font-size: 13px; }
+    .cog-scenario-question { font-size: 13px; }
+    .cog-option { padding: 12px; font-size: 13px; }
+
     /* -- 培训师端 -- */
     .form-input, .form-textarea, .form-select { font-size: 16px; }
     .inline-flex { flex-direction: column; align-items: stretch; }
@@ -842,6 +1068,16 @@ body {
     .checklist-overall-label { font-size: 13px; }
     .checklist-overall-num { font-size: 13px; }
     .checklist-legend { gap: 10px; font-size: 10px; }
+
+    /* -- 团播认知极小屏 -- */
+    .cog-hero { padding: 20px 8px 12px; }
+    .cog-hero-title { font-size: 17px; }
+    .cog-card { padding: 16px 12px; }
+    .cog-card-marker { width: 24px; height: 24px; font-size: 12px; top: -6px; left: -6px; }
+    .cog-card-title { font-size: 15px; }
+    .cog-card-body { font-size: 12px; }
+    .cog-option { padding: 10px; font-size: 12px; }
+    .cog-option-letter { width: 20px; height: 20px; font-size: 11px; }
 }
 
 /* -- 触屏设备去掉 hover 效果（保留到桌面端） -- */

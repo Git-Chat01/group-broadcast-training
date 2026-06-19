@@ -20,6 +20,7 @@ const DB = {
             localStorage.setItem("exams", JSON.stringify(defaults.exams || {}));
             localStorage.setItem("checklist", JSON.stringify(defaults.checklist || []));
             localStorage.setItem("scriptTemplates", JSON.stringify(defaults.scriptTemplates || []));
+            localStorage.setItem("cognition", JSON.stringify(defaults.cognition || []));
             localStorage.setItem("trainees", JSON.stringify(defaults.trainees || {}));
             localStorage.setItem("dataVersion", codeVersion);
             return;
@@ -33,6 +34,7 @@ const DB = {
         this._mergeExams(defaults.exams || {});
         this._mergeChecklist(defaults.checklist || []);
         this._mergeScriptTemplates(defaults.scriptTemplates || []);
+        this._mergeCognition(defaults.cognition || []);
         // ⚠️ 以下两项为运行态用户数据，任何情况下都不覆盖、不删除：
         //    adminPassword — 培训师自设密码
         //    trainees — 所有新人的考试记录、能力清单进度、话术版本
@@ -156,6 +158,33 @@ const DB = {
         if (changed) this.saveScriptTemplates(existing);
     },
 
+    /**
+     * 智能合并团播认知：
+     * - 新卡片（ID 不存在）→ 自动添加
+     * - 已有卡片 → 用默认数据更新 title/content/scenario
+     * - 已删除的卡片保留（不主动删数据）
+     */
+    _mergeCognition(defaultCards) {
+        const existing = this.getCognition();
+        const existingMap = new Map(existing.map(m => [m.id, m]));
+        let changed = false;
+
+        defaultCards.forEach(dc => {
+            const old = existingMap.get(dc.id);
+            if (!old) {
+                existing.push(dc);
+                changed = true;
+            } else {
+                old.title = dc.title;
+                old.content = dc.content;
+                old.scenario = dc.scenario;
+                changed = true;
+            }
+        });
+
+        if (changed) this.saveCognition(existing);
+    },
+
     // ===== 管理密码 =====
     getAdminPassword() {
         return localStorage.getItem("adminPassword") || "admin123";
@@ -216,6 +245,15 @@ const DB = {
     },
     saveChecklist(checklist) {
         localStorage.setItem("checklist", JSON.stringify(checklist));
+    },
+
+    // ===== 团播认知 =====
+    getCognition() {
+        try { return JSON.parse(localStorage.getItem("cognition")) || []; }
+        catch (e) { return []; }
+    },
+    saveCognition(cards) {
+        localStorage.setItem("cognition", JSON.stringify(cards));
     },
 
     // ===== 新人数据 =====
