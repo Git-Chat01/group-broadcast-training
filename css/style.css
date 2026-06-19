@@ -339,27 +339,71 @@ body {
 .question-text { font-size: 16px; font-weight: 500; margin: 12px 0; line-height: 1.7; }
 
 .question-images {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    display: flex; flex-wrap: wrap; gap: 10px;
     margin-bottom: 16px;
 }
 .question-img {
-    width: 100%; max-height: 280px;
+    max-width: 100%; max-height: 280px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    cursor: pointer; object-fit: cover;
-    aspect-ratio: 3/4;
+    cursor: pointer; object-fit: contain;
     transition: transform 0.2s;
 }
 .question-img:hover { transform: scale(1.02); }
-.question-img.zoomed {
-    position: fixed; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 90vw; max-height: 90vh;
-    z-index: 200;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+
+/* -- 图片遮罩缩放（替代 position:fixed 切换，避免抖动） -- */
+.img-zoom-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 300;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.img-zoom-overlay.active { display: flex; }
+.img-zoom-img {
+    max-width: 92vw; max-height: 92vh;
     border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    object-fit: contain;
+}
+
+/* -- 图片选项配对（图片数 === 选项数时使用） -- */
+.img-opt-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.img-opt-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--card);
+}
+.img-opt-card:hover { box-shadow: var(--shadow-sm); }
+.img-opt-card.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+.img-opt-img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    cursor: zoom-in;
+}
+.img-opt-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text);
+    min-height: 44px;
 }
 
 /* 选项 */
@@ -938,11 +982,12 @@ body {
     /* -- 题目 -- */
     .question-card { padding: 16px; margin-bottom: 12px; }
     .question-text { font-size: 15px; }
-    .question-images {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px;
-    }
-    .question-img { max-height: 220px; aspect-ratio: 3/4; }
+    .question-images { gap: 6px; }
+    .question-img { max-height: 200px; }
+
+    /* 图片选项配对 — 手机端 2 列 */
+    .img-opt-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .img-opt-label { font-size: 12px; padding: 8px 10px; min-height: 44px; }
 
     /* -- 选项 -- */
     .option-item { padding: 14px 14px; margin-bottom: 8px; min-height: 48px; }

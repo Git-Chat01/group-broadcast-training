@@ -345,10 +345,11 @@ const Trainee = {
                 ? (this.userAnswers[q.id] && this.userAnswers[q.id].trim() !== "")
                 : (this.userAnswers[q.id] && this.userAnswers[q.id].length > 0);
 
-            // 图片
+            // 图片 — 判断是否与选项一一配对（图片数 === 选项数）
+            const pairedImages = (q.images && q.images.length > 0 && q.images.length === (q.options || []).length);
             let imgsHtml = "";
-            if (q.images && q.images.length > 0) {
-                imgsHtml = `<div class="question-images">${q.images.map(img => `<img src="${img}" class="question-img" onclick="this.classList.toggle('zoomed')">`).join("")}</div>`;
+            if (q.images && q.images.length > 0 && !pairedImages) {
+                imgsHtml = `<div class="question-images">${q.images.map(img => `<img src="${img}" class="question-img" onclick="Trainee.zoomImage(event, '${img}')">`).join("")}</div>`;
             }
 
             // 作答区
@@ -361,14 +362,29 @@ const Trainee = {
                     </div>`;
             } else {
                 const options = q.options || [];
-                answerHtml = `<ul class="option-list">${options.map((opt, oi) => {
-                    const sel = (this.userAnswers[q.id] || []).includes(oi);
-                    const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
-                    return `
-                        <li class="option-item ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
-                            <span class="${cls}"></span><span>${opt}</span>
-                        </li>`;
-                }).join("")}</ul>`;
+                if (pairedImages) {
+                    // 图片与选项一一配对：每张图嵌入对应选项
+                    answerHtml = `<div class="img-opt-grid">${options.map((opt, oi) => {
+                        const sel = (this.userAnswers[q.id] || []).includes(oi);
+                        const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
+                        return `
+                            <div class="img-opt-card ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
+                                <img src="${q.images[oi]}" class="img-opt-img" onclick="Trainee.zoomImage(event, '${q.images[oi]}')">
+                                <div class="img-opt-label">
+                                    <span class="${cls}"></span><span>${opt}</span>
+                                </div>
+                            </div>`;
+                    }).join("")}</div>`;
+                } else {
+                    answerHtml = `<ul class="option-list">${options.map((opt, oi) => {
+                        const sel = (this.userAnswers[q.id] || []).includes(oi);
+                        const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
+                        return `
+                            <li class="option-item ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
+                                <span class="${cls}"></span><span>${opt}</span>
+                            </li>`;
+                    }).join("")}</ul>`;
+                }
             }
 
             return `
@@ -380,8 +396,8 @@ const Trainee = {
                 </div>`;
         }).join("");
 
-        // 绑定选择题事件
-        container.querySelectorAll(".option-item").forEach(el => {
+        // 绑定选择题事件（普通选项 + 图片配对选项）
+        container.querySelectorAll(".option-item, .img-opt-card").forEach(el => {
             el.addEventListener("click", function() {
                 Trainee.selectOption(
                     parseInt(this.dataset.qid),
@@ -406,6 +422,27 @@ const Trainee = {
         const d = document.createElement("div");
         d.textContent = str || "";
         return d.innerHTML;
+    },
+
+    /**
+     * 图片缩放 — 用全屏遮罩替代 position:fixed 切换，避免页面抖动
+     */
+    zoomImage(e, src) {
+        e.stopPropagation();
+        let overlay = document.getElementById("img-zoom-overlay");
+        if (!overlay) {
+            overlay = document.createElement("div");
+            overlay.id = "img-zoom-overlay";
+            overlay.className = "img-zoom-overlay";
+            overlay.innerHTML = '<img id="img-zoom-img" class="img-zoom-img" src="">';
+            overlay.addEventListener("click", () => {
+                overlay.classList.remove("active");
+            });
+            document.body.appendChild(overlay);
+        }
+        const bigImg = document.getElementById("img-zoom-img");
+        bigImg.src = src;
+        overlay.classList.add("active");
     },
 
     selectOption(qid, oidx, qtype) {
