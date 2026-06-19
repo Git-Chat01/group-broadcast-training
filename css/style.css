@@ -339,14 +339,17 @@ body {
 .question-text { font-size: 16px; font-weight: 500; margin: 12px 0; line-height: 1.7; }
 
 .question-images {
-    display: flex; flex-wrap: wrap; gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     margin-bottom: 16px;
 }
 .question-img {
-    max-width: 100%; max-height: 280px;
+    width: 100%; max-height: 280px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    cursor: pointer; object-fit: contain;
+    cursor: pointer; object-fit: cover;
+    aspect-ratio: 3/4;
     transition: transform 0.2s;
 }
 .question-img:hover { transform: scale(1.02); }
@@ -935,8 +938,11 @@ body {
     /* -- 题目 -- */
     .question-card { padding: 16px; margin-bottom: 12px; }
     .question-text { font-size: 15px; }
-    .question-img { max-height: 200px; }
-    .question-images { gap: 6px; }
+    .question-images {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    .question-img { max-height: 220px; aspect-ratio: 3/4; }
 
     /* -- 选项 -- */
     .option-item { padding: 14px 14px; margin-bottom: 8px; min-height: 48px; }
