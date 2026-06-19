@@ -93,11 +93,12 @@ const App = {
             this._resetToLoginMode();
         });
 
-        // 输入密码 → 强度实时更新
+        // 输入密码 → 强度实时更新（仅在注册/设置密码模式下显示）
         document.getElementById("inputTraineePassword").addEventListener("input", (e) => {
             const pwd = e.target.value;
             const wrap = document.getElementById("passwordStrengthWrap");
-            if (pwd.length > 0) {
+            // 只在注册/设密模式下才显示强度条，正常登录不需要
+            if (pwd.length > 0 && this._loginState === "setup") {
                 wrap.style.display = "block";
                 const s = Auth.evaluatePasswordStrength(pwd);
                 const fill = document.getElementById("passwordStrengthFill");
