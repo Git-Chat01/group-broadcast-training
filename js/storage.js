@@ -117,7 +117,6 @@ const DB = {
             } else {
                 old.category = dm.category;
                 old.item = dm.item;
-                if (dm.guide) old.guide = dm.guide;
                 changed = true;
             }
         });
