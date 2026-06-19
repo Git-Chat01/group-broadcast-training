@@ -468,7 +468,7 @@ const Trainee = {
             ? (this.userAnswers[qid] && this.userAnswers[qid].trim() !== "")
             : (this.userAnswers[qid] && this.userAnswers[qid].length > 0);
         card.className = "question-card " + (isAnswered ? "answered" : "");
-        card.querySelectorAll(".option-item").forEach(el => {
+        card.querySelectorAll(".option-item, .img-opt-card").forEach(el => {
             const oi = parseInt(el.dataset.oidx);
             if ((this.userAnswers[qid] || []).includes(oi)) el.classList.add("selected");
             else el.classList.remove("selected");
