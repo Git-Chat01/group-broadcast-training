@@ -4,7 +4,7 @@
    ============================================ */
 
 /** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据 */
-const DATA_VERSION = 12;
+const DATA_VERSION = 15;
 
 const Defaults = {
     adminPassword: "xsx2001..",
@@ -300,57 +300,88 @@ const Defaults = {
     checklist: [
         // ===== 软件类 =====
         // OBS Studio
-        { id: "obs-scene", category: "OBS Studio", item: "场景添加、命名与切换" },
-        { id: "obs-source", category: "OBS Studio", item: "图片/视频/文字等素材添加" },
-        { id: "obs-hotkey", category: "OBS Studio", item: "快捷键设置（场景切换、摄像头开关等）" },
-        { id: "obs-vcam", category: "OBS Studio", item: "启动虚拟摄像头（供直播伴侣使用）" },
+        { id: "obs-scene", category: "OBS Studio", item: "场景添加、命名与切换",
+          guide: { image: "images/guide/obs-scene.png", text: "在场景页面下找到窗口下方加号➕，然后给场景命名。下载：obsproject.com/zh-cn/download" } },
+        { id: "obs-source", category: "OBS Studio", item: "图片/视频/文字等素材添加",
+          guide: { image: "images/guide/obs-source.png", text: "找到源窗口下方加号➕，点击「图像」添加图片素材。视频和文字添加同理。" } },
+        { id: "obs-hotkey", category: "OBS Studio", item: "快捷键设置（场景切换、摄像头开关等）",
+          guide: { image: "images/guide/obs-hotkey.png", text: "OBS 快捷键可设置场景切换、摄像头开关、窗口切换等多种功能，大幅提升开播效率。" } },
+        { id: "obs-vcam", category: "OBS Studio", item: "启动虚拟摄像头（供直播伴侣使用）",
+          guide: { image: "images/guide/obs-vcam.png", text: "直播伴侣以 OBS 为摄像头源。OBS 虚拟摄像头不开，直播伴侣就没有画面。点击「启动虚拟摄像头」即可。" } },
 
         // 抖音直播伴侣
-        { id: "dy-uid", category: "抖音直播伴侣", item: "团播管理 — 添加成员 UID" },
-        { id: "dy-img", category: "抖音直播伴侣", item: "添加图片素材" },
-        { id: "dy-video", category: "抖音直播伴侣", item: "添加视频素材" },
-        { id: "dy-text", category: "抖音直播伴侣", item: "添加文字" },
-        { id: "dy-screenshot", category: "抖音直播伴侣", item: "截图功能" },
-        { id: "dy-vote", category: "抖音直播伴侣", item: "连击投票工具配置" },
-        { id: "dy-pk", category: "抖音直播伴侣", item: "双人 PK 血条配置" },
-        { id: "dy-challenge", category: "抖音直播伴侣", item: "单人闯关/冲刺挑战/团员榜单" },
-        { id: "dy-countdown", category: "抖音直播伴侣", item: "拉票倒计时" },
-        { id: "dy-ranking", category: "抖音直播伴侣", item: "投票/点赞榜单" },
-        { id: "dy-games", category: "抖音直播伴侣", item: "互动小游戏（切水果、大鱼吃小鱼等）" },
-        { id: "dy-cocreate", category: "抖音直播伴侣", item: "共创入口（新账号满7天后可用）" },
+        { id: "dy-uid", category: "抖音直播伴侣", item: "团播管理 — 添加成员 UID",
+          guide: { image: "images/guide/dy-uid.png", text: "团播管理 → 添加成员 → 输入主播 UID。UID 查询：抖音主页三条杠 → 设置 → 拉到最下连点空白六下，UID 和 DID 都会显示，添加成员只需 UID。" } },
+        { id: "dy-img", category: "抖音直播伴侣", item: "添加图片素材",
+          guide: { image: "images/guide/dy-img.png", text: "点击「➕添加素材」→ 选择「图片素材」，从本地选择图片添加到直播画面。" } },
+        { id: "dy-video", category: "抖音直播伴侣", item: "添加视频素材",
+          guide: { image: "images/guide/dy-video.png", text: "点击「➕添加素材」→ 选择「视频素材」，支持常见视频格式。" } },
+        { id: "dy-text", category: "抖音直播伴侣", item: "添加文字",
+          guide: { image: "images/guide/dy-text.png", text: "点击「➕添加素材」→ 选择「文字」，可在直播画面上叠加文字信息（如规则说明、倒计时提示）。" } },
+        { id: "dy-screenshot", category: "抖音直播伴侣", item: "截图功能",
+          guide: { image: "images/guide/dy-screenshot.png", text: "点击「➕添加素材」→ 选择「截屏」，快速截取电脑画面区域添加到直播。" } },
+        { id: "dy-vote", category: "抖音直播伴侣", item: "连击投票工具配置",
+          guide: { image: "images/guide/dy-vote.png", text: "团播管理 → 团播玩法 → 连击投票工具。里面可详细编辑投票内容和规则，根据团里需要灵活调整。" } },
+        { id: "dy-pk", category: "抖音直播伴侣", item: "双人 PK 血条配置",
+          guide: { image: "images/guide/dy-pk.png", text: "团播管理 → 团员限时竞争 → 玩法配置。可配置双人对战的血条、时间、倍数等参数。" } },
+        { id: "dy-challenge", category: "抖音直播伴侣", item: "单人闯关/冲刺挑战/团员榜单",
+          guide: { image: "images/guide/dy-challenge.png", text: "单人闯关：团播管理 → 团播玩法 → 单人闯关。冲刺挑战：团播管理 → 团播玩法 → 冲刺挑战。玩法配置里有具体调整功能。" } },
+        { id: "dy-countdown", category: "抖音直播伴侣", item: "拉票倒计时",
+          guide: { image: "images/guide/dy-countdown.png", text: "互动工具里有「拉票倒计时」插件，在拉票环节设置倒计时增加紧迫感，刺激用户投票。" } },
+        { id: "dy-ranking", category: "抖音直播伴侣", item: "投票/点赞榜单",
+          guide: { image: "images/guide/dy-ranking.png", text: "团播管理 → 团播玩法 → 团员榜单。榜单里可设置详细配置，可根据需要调整排名规则和展示方式。" } },
+        { id: "dy-games", category: "抖音直播伴侣", item: "互动小游戏（切水果、大鱼吃小鱼等）",
+          guide: { image: "images/guide/dy-games.png", text: "互动工具里内置多款小游戏（切水果、大鱼吃小鱼等），用来填补直播空档、活跃气氛。" } },
+        { id: "dy-cocreate", category: "抖音直播伴侣", item: "共创入口（新账号满7天后可用）",
+          guide: { image: "images/guide/dy-cocreate.png", text: "设置 → 直播间 → 直播间共创。共创可进行开播流量共享，新账号需播满七天后开放。" } },
 
         // 小红花音效
-        { id: "xhhy-play", category: "小红花音效", item: "音效播放与快捷键使用" },
-        { id: "xhhy-import", category: "小红花音效", item: "自定义导入音效（支持视频导入）" },
-        { id: "xhhy-backup", category: "小红花音效", item: "音效配置导出备份" },
+        { id: "xhhy-play", category: "小红花音效", item: "音效播放与快捷键使用",
+          guide: { image: "images/guide/xhhy-play.png", text: "任何音效都可设置快捷键、音量、循环等参数。播放音效是主持辅助互动和情绪输出的核心工具。" } },
+        { id: "xhhy-import", category: "小红花音效", item: "自定义导入音效（支持视频导入）",
+          guide: { image: "images/guide/xhhy-import.png", text: "自定义导入 → 导入音效 → 导入。可直接视频导入，软件会自动识别音效，然后剪辑想要的片段。" } },
+        { id: "xhhy-backup", category: "小红花音效", item: "音效配置导出备份",
+          guide: { image: "images/guide/xhhy-backup.png", text: "养成导出备份习惯！音效失灵等突发状况会直接影响开播，备份后可以快速恢复，不影响开播节奏。" } },
 
         // Studio-One 声卡机架
-        { id: "so-startup", category: "Studio-One 声卡机架", item: "正确启动与关闭机架软件" },
-        { id: "so-fader", category: "Studio-One 声卡机架", item: "调节音杆（推杆操作）" },
-        { id: "so-channel", category: "Studio-One 声卡机架", item: "关闭/开启通道" },
-        { id: "so-noclick", category: "Studio-One 声卡机架", item: "不乱点其他按钮（只操作推杆和喇叭）" },
+        { id: "so-startup", category: "Studio-One 声卡机架", item: "正确启动与关闭机架软件",
+          guide: { image: "images/guide/so-startup.png", text: "声卡需配合机架软件（Studio-One 等），通过调音后才能正常使用。启动顺序：先开机架，再开其他音频软件。" } },
+        { id: "so-fader", category: "Studio-One 声卡机架", item: "调节音杆（推杆操作）",
+          guide: { image: "images/guide/so-fader.png", text: "主持只需操作推杆（音量调节）和小喇叭（静音/独听）。不要乱动其他旋钮和设置。" } },
+        { id: "so-channel", category: "Studio-One 声卡机架", item: "关闭/开启通道",
+          guide: { image: "images/guide/so-channel.png", text: "每个通道可独立静音或开启。按需控制麦克风、音乐、音效等各通道状态。" } },
+        { id: "so-noclick", category: "Studio-One 声卡机架", item: "不乱点其他按钮（只操作推杆和喇叭）",
+          guide: { image: "images/guide/so-noclick.png", text: "声卡界面复杂，主持只需动推杆和小喇叭，不要乱点其他按钮。关闭声卡时弹窗点「否」退出——不要点错！" } },
 
         // ===== 硬件类 =====
         // 声卡与麦克风
-        { id: "sc-connect", category: "声卡与麦克风", item: "声卡设备连接与线路识别" },
-        { id: "sc-freq", category: "声卡与麦克风", item: "无线麦克风频率匹配" },
-        { id: "sc-close", category: "声卡与麦克风", item: "关闭声卡时的正确操作（弹窗点「否」）" },
+        { id: "sc-connect", category: "声卡与麦克风", item: "声卡设备连接与线路识别",
+          guide: { image: "images/guide/sc-connect.png", text: "上方黑色盒子是声卡，下方长方形盒子是麦克风信号发射器。声卡是连接主机的音频输出设备，识别各线路接口位置。" } },
+        { id: "sc-freq", category: "声卡与麦克风", item: "无线麦克风频率匹配",
+          guide: { image: "images/guide/sc-freq.png", text: "麦克风信号发射器与无线麦克风对号频率即可输出声音。调好无线麦克风频率，与发射器频率一致即可正常使用。" } },
+        { id: "sc-close", category: "声卡与麦克风", item: "关闭声卡时的正确操作（弹窗点「否」）",
+          guide: { image: "images/guide/sc-close.png", text: "关闭声卡时会弹出保存窗口，务必点击「否」退出。点错会覆盖正确的调音参数，导致下次开播声音异常。" } },
 
         // 监视器与显示屏
-        { id: "mon-connect", category: "监视器与显示屏", item: "监视器（副屏）连接电脑" },
-        { id: "mon-switch", category: "监视器与显示屏", item: "信号源切换（短按切换，长按确定）" },
+        { id: "mon-connect", category: "监视器与显示屏", item: "监视器（副屏）连接电脑",
+          guide: { image: "images/guide/mon-connect.png", text: "监视器通过 HDMI 线连接电脑作为副屏使用，用于实时监看直播画面效果。" } },
+        { id: "mon-switch", category: "监视器与显示屏", item: "信号源切换（短按切换，长按确定）",
+          guide: { image: "images/guide/mon-switch.png", text: "短按「切换」键切换输入源，长按「确定」键确认选择。操作简单但要记住顺序。" } },
 
         // 相机与散热
-        { id: "cam-power", category: "相机与散热", item: "相机开关操作" },
-        { id: "cam-cooling", category: "相机与散热", item: "水冷散热器 — 与相机同步关闭（防受潮）" },
-        { id: "cam-fan", category: "相机与散热", item: "散热小风扇 — 防过热导致画面黑屏" },
+        { id: "cam-power", category: "相机与散热", item: "相机开关操作",
+          guide: { image: "images/guide/cam-power.png", text: "正确开关相机，避免直接断电导致设备损坏。使用前确认采集卡已连接。" } },
+        { id: "cam-cooling", category: "相机与散热", item: "水冷散热器 — 与相机同步关闭（防受潮）",
+          guide: { image: "images/guide/cam-cooling.png", text: "关闭相机的同时关水冷散热器。如果只关相机不关水冷，持续运行会导致相机内部受潮，损坏设备。" } },
+        { id: "cam-fan", category: "相机与散热", item: "散热小风扇 — 防过热导致画面黑屏",
+          guide: { image: "images/guide/cam-fan.png", text: "小风扇和散热器防止相机过热。相机温度过高会自动黑屏保护，直播画面直接中断。" } },
 
-        // 灯光设备
+        // 灯光设备（暂无配图）
         { id: "light-face", category: "灯光设备", item: "面光配置与调整" },
         { id: "light-leg", category: "灯光设备", item: "腿光配置与调整" },
         { id: "light-rim", category: "灯光设备", item: "轮廓光配置与调整" },
 
-        // 直播间整体硬件
+        // 直播间整体硬件（暂无配图）
         { id: "room-power", category: "直播间整体硬件", item: "独立完成全套设备开关机" },
         { id: "room-debug", category: "直播间整体硬件", item: "常见故障检测与排除" },
         { id: "room-cable", category: "直播间整体硬件", item: "硬件线路识别与拔插" }

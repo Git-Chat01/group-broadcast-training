@@ -28,7 +28,7 @@ const Trainee = {
         const checklistCardHTML = checklist.length > 0 ? `
             <div class="card checklist-entry-card">
                 <div class="checklist-entry-main">
-                    <div class="checklist-entry-title">📋 软件硬件能力清单</div>
+                    <div class="checklist-entry-title">📋 软硬件自检</div>
                     <div class="checklist-entry-sub">诚实面对自己，缺什么就练什么</div>
                     <div class="checklist-mini-bar">
                         <div class="checklist-mini-track">
@@ -153,7 +153,7 @@ const Trainee = {
             <div class="checklist-fullscreen">
                 <div class="checklist-fs-header">
                     <button class="checklist-back-btn" onclick="Trainee.renderStudyPanel()" aria-label="返回">←<span class="checklist-back-label"> 返回</span></button>
-                    <h2 class="checklist-fs-title">📋 软件硬件能力清单</h2>
+                    <h2 class="checklist-fs-title">📋 软硬件自检</h2>
                     <span class="checklist-fs-spacer"></span>
                 </div>
                 <div class="checklist-overall-bar">
@@ -227,7 +227,7 @@ const Trainee = {
         if (fillEl) fillEl.style.width = pct + "%";
     },
 
-    /** 手风琴折叠 */
+    /** 手风琴折叠（清单+话术共用） */
     toggleCategory(catId) {
         const body = document.getElementById(catId + "-body");
         const arrow = document.getElementById(catId + "-arrow");
@@ -650,11 +650,11 @@ const Trainee = {
                     <div><div style="font-size:32px;font-weight:700;color:var(--success);">${clMastered}/${clTotal}</div><div style="font-size:13px;color:var(--text-secondary);">能力掌握</div></div>
                 </div>
                 <div class="progress-bar-wrap"><div class="progress-bar-fill checklist-progress-fill" style="width:${clPct}%;"></div></div>
-                <div class="progress-label">能力清单 ${clPct}%</div>
+                <div class="progress-label">软硬件自检 ${clPct}%</div>
             </div>
 
             <div class="progress-section">
-                <h3>能力清单详情</h3>
+                <h3>软硬件自检详情</h3>
                 ${this._renderProgressChecklist()}
             </div>
 

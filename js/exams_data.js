@@ -6,7 +6,7 @@
 Defaults.exams = {
 
     "exam-xwgf": {
-        title: "团播行为规范考试（一期）",
+        title: "团播行为规范考试",
         questions: [
             { id: 1, type: "single", question: "下述女团服装不符合哪项60分要求？（单选）",
               images: ["images/exam-xwgf/image2.png"],
@@ -92,7 +92,7 @@ Defaults.exams = {
     },
 
     "exam-smts": {
-        title: "团播审美能力提升（九期）",
+        title: "团播审美能力提升",
         questions: [
             { id: 1, type: "multiple", question: "以下内容哪些属于审美提升范畴？（多选）",
               images: [],
