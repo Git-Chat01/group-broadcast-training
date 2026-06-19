@@ -1855,3 +1855,102 @@ body {
     box-sizing: border-box;
     margin-top: 8px;
 }
+
+/* ===== Fix 1: 待批注概览 ===== */
+.pending-review-card {
+    padding: 16px 14px;
+}
+.pending-review-header {
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: var(--text);
+}
+.pending-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.pending-review-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+    min-height: 44px;  /* 手机端触摸目标 */
+}
+.pending-review-item:hover,
+.pending-review-item:active {
+    background: #FFF3E0;
+}
+.pending-review-name {
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.pending-review-scene {
+    flex: 1;
+    color: var(--text-secondary);
+}
+.pending-review-arrow {
+    color: var(--primary);
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/* ===== Fix 2: 未读批注徽章 ===== */
+.script-item-badge.feedback-unread {
+    background: #FF3B30;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* ===== Fix 4: 反馈历史链 ===== */
+.feedback-chain-item {
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid var(--border);
+}
+.feedback-chain-item.feedback-chain-current {
+    border-left-color: var(--primary);
+    background: #F0F4FF;
+}
+.feedback-chain-ver {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.feedback-chain-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+}
+.feedback-chain-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ===== Fix 5: 基于批注修改按钮 ===== */
+.feedback-revise-wrap {
+    text-align: center;
+    padding: 8px 0 0;
+}
+.feedback-revise-btn {
+    font-size: 13px;
+    width: 100%;
+    padding: 10px 0;
+    border-color: var(--primary);
+    color: var(--primary);
+    min-height: 44px;
+}

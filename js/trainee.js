@@ -828,11 +828,13 @@ const Trainee = {
         }
 
         // 统计
-        let totalWritten = 0, totalReviewed = 0;
+        let totalWritten = 0, totalReviewed = 0, unreadCount = 0;
         templates.forEach(t => {
             const s = scripts[t.id];
             if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) totalWritten++;
             if (s && s.status === "reviewed") totalReviewed++;
+            // Fix 2: 统计未读批注
+            if (s && s.feedbackRead === false) unreadCount++;
         });
 
         // 按分类分组
@@ -888,8 +890,13 @@ const Trainee = {
                             }
                             let badgeHTML = "";
                             const activeVer = s ? s.versions[s.activeVersion - 1] : null;
+                            // Fix 2: 未读批注 → 红点「新批注」，已读 → 灰色「有批注」
                             if (s && s.status === "reviewed" && activeVer && activeVer.feedback) {
-                                badgeHTML = '<span class="script-item-badge feedback">有批注</span>';
+                                if (s.feedbackRead === false) {
+                                    badgeHTML = '<span class="script-item-badge feedback-unread">🔴 新批注</span>';
+                                } else {
+                                    badgeHTML = '<span class="script-item-badge feedback">有批注</span>';
+                                }
                             }
                             // 「我的话术」模式：显示内容摘要
                             let previewHTML = "";
@@ -939,7 +946,7 @@ const Trainee = {
                     <div class="progress-bar-wrap" style="margin-top:12px;">
                         <div class="progress-bar-fill checklist-progress-fill" style="width:${pct}%;"></div>
                     </div>
-                    <div class="progress-label">${pct}%${totalReviewed > 0 ? ' · 培训师已批 ' + totalReviewed + ' 个' : ''}</div>
+                    <div class="progress-label">${pct}%${totalReviewed > 0 ? ' · 培训师已批 ' + totalReviewed + ' 个' : ''}${unreadCount > 0 ? ' · <span style=\"color:#FF3B30;\">' + unreadCount + ' 个未读</span>' : ''}</div>
                 </div>
             </div>
             <div class="progress-section">
@@ -957,6 +964,10 @@ const Trainee = {
         this.currentScriptId = templateId;
         const scripts = DB.getScripts(Auth.traineeName);
         const sc = scripts[templateId];
+        // Fix 2: 打开详情即标记批注已读
+        if (sc && sc.feedbackRead === false) {
+            DB.markScriptFeedbackRead(Auth.traineeName, templateId);
+        }
         const activeV = sc ? sc.activeVersion : 0;
         const currentContent = sc && activeV > 0
             ? (sc.versions.find(v => v.version === activeV) || {}).content || ""
@@ -990,14 +1001,34 @@ const Trainee = {
             ? '<ul>' + template.tips.map(tip => '<li>' + this.escapeHtml(tip) + '</li>').join("") + '</ul>'
             : '<p style="color:var(--text-muted);">暂无技巧</p>';
 
-        // 批注
+        // Fix 4: 展示所有版本的批注历史（反馈链）
         let feedbackHTML = "";
-        if (currentFeedback) {
+        const allFeedbackVers = sc ? sc.versions.filter(v => v.feedback) : [];
+        if (allFeedbackVers.length > 0) {
+            const chainItems = allFeedbackVers.map(v => {
+                const isCurrent = v.version === activeV;
+                return `
+                    <div class="feedback-chain-item${isCurrent ? ' feedback-chain-current' : ''}">
+                        <div class="feedback-chain-ver">版本 ${v.version}${isCurrent ? ' · 当前' : ''}</div>
+                        <div class="feedback-chain-text">${this.escapeHtml(v.feedback.text)}</div>
+                        <div class="feedback-chain-meta">${v.feedback.trainer} · ${v.feedback.createdAt}</div>
+                    </div>`;
+            }).join("");
             feedbackHTML = `
-                <div class="feedback-block">
-                    <div class="feedback-block-label">📝 培训师批注（版本 ${activeV}）</div>
-                    <div class="feedback-block-text">${this.escapeHtml(currentFeedback.text)}</div>
-                    <div class="feedback-block-meta">${currentFeedback.trainer} · ${currentFeedback.createdAt}</div>
+                <div class="script-section">
+                    <div class="script-section-label">📋 反馈记录（共 ${allFeedbackVers.length} 条）</div>
+                    ${chainItems}
+                </div>`;
+        }
+
+        // Fix 5: 当前版本有批注时，显示「基于批注修改」快捷按钮
+        let reviseBtnHTML = "";
+        if (currentFeedback) {
+            reviseBtnHTML = `
+                <div class="feedback-revise-wrap">
+                    <button class="btn btn-outline btn-sm feedback-revise-btn" onclick="Trainee.startRevise('${templateId}')">
+                        ✏️ 基于批注创建新版本
+                    </button>
                 </div>`;
         }
 
@@ -1043,6 +1074,7 @@ const Trainee = {
                 </div>
 
                 ${feedbackHTML}
+                ${reviseBtnHTML}
             </div>
 
             <div class="script-input-bar">
@@ -1167,14 +1199,39 @@ const Trainee = {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
-            // 更新按钮状态（非新建版本不重渲染，原地反馈）
+            // Fix 5: 临时反馈而非永久禁用 — 用户可切版本继续提交
             const submitBtn = document.querySelector(".btn-script-submit");
             if (submitBtn) {
+                const origText = submitBtn.textContent;
                 submitBtn.textContent = "✓ 已提交";
-                submitBtn.style.background = "#34C759";
+                submitBtn.style.background = "#E8F5E9";
+                submitBtn.style.color = "#34C759";
                 submitBtn.disabled = true;
+                setTimeout(() => {
+                    submitBtn.textContent = origText;
+                    submitBtn.style.background = "";
+                    submitBtn.style.color = "";
+                    submitBtn.disabled = false;
+                }, 2000);
             }
         }
+    },
+
+    /** Fix 5: 基于批注创建新版本 — 切到新建、预填当前内容、聚焦输入框 */
+    startRevise(templateId) {
+        // 切到「新建」
+        const sel = document.getElementById("scriptVersionSelect");
+        if (sel) sel.value = "0";
+        // 预填当前版本内容（方便在原有基础上改）
+        const contentEl = document.getElementById("scriptContentInput");
+        if (contentEl) {
+            // 保留当前内容，聚焦到末尾
+            contentEl.focus();
+            contentEl.setSelectionRange(contentEl.value.length, contentEl.value.length);
+        }
+        // 滚动到输入区
+        const inputBar = document.querySelector(".script-input-bar");
+        if (inputBar) inputBar.scrollIntoView({ behavior: "smooth", block: "center" });
     },
 
     /** 切换版本 */

@@ -369,6 +369,40 @@ const Trainer = {
                         </tbody>
                     </table>
                 </div>` : ''}
+                ${(() => {
+                    // 待批注汇总 — 收集所有状态为 submitted 的话术
+                    const templates = DB.getScriptTemplates();
+                    const pendingList = [];
+                    names.forEach(name => {
+                        const scripts = DB.getScripts(name);
+                        templates.forEach(t => {
+                            const s = scripts[t.id];
+                            if (s && s.status === "submitted") {
+                                pendingList.push({ name, templateId: t.id, scene: t.scene, category: t.category });
+                            }
+                        });
+                    });
+                    if (pendingList.length > 0) {
+                        const uniqueNames = new Set(pendingList.map(p => p.name)).size;
+                        return `
+                            <div class="card pending-review-card" style="margin-bottom:16px;border-left:4px solid #FF9500;">
+                                <div class="pending-review-header">
+                                    <span style="font-weight:700;">📝 待批注汇总（${uniqueNames} 人 · ${pendingList.length} 条）</span>
+                                </div>
+                                <div class="pending-review-list">
+                                    ${pendingList.map(p => `
+                                        <div class="pending-review-item" onclick="Trainer.openScriptFeedback('${p.name}', '${p.templateId}')">
+                                            <span class="pending-review-name">🎤 ${p.name}</span>
+                                            <span class="pending-review-scene">${p.scene}</span>
+                                            <span class="pending-review-cat" style="color:var(--text-muted);font-size:12px;">${p.category}</span>
+                                            <span class="pending-review-arrow">→</span>
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            </div>`;
+                    }
+                    return "";
+                })()}
                 ${names.map(name => {
                     const t = trainees[name];
                     const history = t.examHistory || [];
@@ -384,7 +418,8 @@ const Trainer = {
                     templates.forEach(t => {
                         const s = scripts[t.id];
                         if (s && s.status === "submitted") scriptPending++;
-                        if (s && s.status !== "draft" && s.versions.length > 0) scriptWritten++;
+                        // Fix 3: 用 completed 标志位（一旦提交过永不回退），避免创建新版本后计数丢失
+                        if (s && s.completed) scriptWritten++;
                     });
 
                     const hasPwd = !!t.passwordHash;
@@ -524,13 +559,20 @@ const Trainer = {
         const currentContent = currentVer ? currentVer.content : "（该场景尚未提交）";
         const currentFeedback = currentVer ? currentVer.feedback : null;
 
+        // Fix 4: 展示所有版本的批注历史（不只是当前活跃版本）
         let feedbackHTML = "";
-        if (currentFeedback) {
+        const allFeedbackVers = sc ? sc.versions.filter(v => v.feedback) : [];
+        if (allFeedbackVers.length > 0) {
             feedbackHTML = `
-                <div class="feedback-block">
-                    <div class="feedback-block-label">我之前的批注（版本 ${activeV}）</div>
-                    <div class="feedback-block-text">${Trainer.escHtml(currentFeedback.text)}</div>
-                    <div class="feedback-block-meta">${currentFeedback.createdAt}</div>
+                <div class="script-section">
+                    <div class="script-section-label">📋 反馈记录（共 ${allFeedbackVers.length} 条）</div>
+                    ${allFeedbackVers.map(v => `
+                        <div class="feedback-chain-item" style="${v.version === activeV ? 'border-left:3px solid var(--primary);' : ''}">
+                            <div class="feedback-chain-ver">版本 ${v.version}${v.version === activeV ? ' · 当前' : ''}</div>
+                            <div class="feedback-chain-text">${Trainer.escHtml(v.feedback.text)}</div>
+                            <div class="feedback-chain-meta">${v.feedback.trainer} · ${v.feedback.createdAt}</div>
+                        </div>
+                    `).join("")}
                 </div>`;
         }
 

@@ -574,8 +574,30 @@ const DB = {
                 createdAt: new Date().toLocaleString("zh-CN")
             };
             sc.status = "reviewed";
+            sc.feedbackRead = false;  // 未读标记：新人打开详情时清除
             this.saveTrainees(trainees);
         }
+    },
+
+    /** 标记批注为已读（新人打开场景详情时调用） */
+    markScriptFeedbackRead(name, templateId) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return;
+        const sc = trainees[name].scripts[templateId];
+        if (sc && sc.feedbackRead === false) {
+            sc.feedbackRead = true;
+            this.saveTrainees(trainees);
+        }
+    },
+
+    /** 检查是否有未读批注（返回未读数量） */
+    countUnreadFeedback(name) {
+        const allScripts = this.getScripts(name);
+        let count = 0;
+        Object.keys(allScripts).forEach(tid => {
+            if (allScripts[tid].feedbackRead === false) count++;
+        });
+        return count;
     },
 
     /** 添加考试记录 */
