@@ -363,16 +363,13 @@ const Trainee = {
             } else {
                 const options = q.options || [];
                 if (pairedImages) {
-                    // 图片与选项一一配对：点图片选中，点🔍缩放
+                    // 图片与选项一一配对：点图缩放查看，点标签选中
                     answerHtml = `<div class="img-opt-grid">${options.map((opt, oi) => {
                         const sel = (this.userAnswers[q.id] || []).includes(oi);
                         const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
                         return `
                             <div class="img-opt-card ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
-                                <div class="img-opt-img-wrap">
-                                    <img src="${q.images[oi]}" class="img-opt-img">
-                                    <button class="img-opt-zoom" onclick="Trainee.zoomImage(event, '${q.images[oi]}')" title="放大查看">🔍</button>
-                                </div>
+                                <img src="${q.images[oi]}" class="img-opt-img" onclick="Trainee.zoomImage(event, '${q.images[oi]}')">
                                 <div class="img-opt-label">
                                     <span class="${cls}"></span><span>${opt}</span>
                                 </div>
