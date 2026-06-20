@@ -1120,9 +1120,30 @@ const Trainee = {
         }
 
         if (isNewVersion) {
-            DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "submitted");
+            const newV = DB.saveScriptVersion(Auth.traineeName, this.currentScriptId, content, "submitted");
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
-            this.openScriptScene(this.currentScriptId);
+            // 更新版本下拉框（追加新版本并选中），不重渲整个页面
+            if (sel) {
+                const opt = document.createElement("option");
+                opt.value = String(newV);
+                opt.textContent = "版本 " + newV;
+                opt.selected = true;
+                sel.appendChild(opt);
+            }
+            // 显示提交成功反馈
+            const submitBtn = document.querySelector(".btn-script-submit");
+            if (submitBtn) {
+                submitBtn.textContent = "✓ 已提交";
+                submitBtn.style.background = "#E8F5E9";
+                submitBtn.style.color = "#34C759";
+                submitBtn.disabled = true;
+                setTimeout(() => {
+                    submitBtn.textContent = "提交";
+                    submitBtn.style.background = "";
+                    submitBtn.style.color = "";
+                    submitBtn.disabled = false;
+                }, 2000);
+            }
         } else {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
