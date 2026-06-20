@@ -38,7 +38,10 @@ const App = {
             if (e.key === "Escape") Modal.hide();
         });
 
-        // 5. 默认显示登录页
+        // 5. 监听远端数据同步（自动刷新培训师面板）
+        this._bindSyncListener();
+
+        // 6. 默认显示登录页
         this.showView("login");
     },
 
@@ -290,9 +293,22 @@ const App = {
         document.querySelectorAll("#view-trainer .tab-panel").forEach(p => {
             p.classList.toggle("active", p.id === "trainer-panel-" + tabName);
         });
+        // 记录当前 Tab，供数据同步时自动刷新
+        this._currentTrainerTab = tabName;
         if (tabName === "content") Trainer.renderContentPanel();
         if (tabName === "monitor") Trainer.renderMonitorPanel();
-    }
+    },
+
+    /** 监听远端数据同步事件，自动刷新培训师当前面板 */
+    _bindSyncListener() {
+        window.addEventListener("db-synced", () => {
+            if (Auth.role !== "trainer") return;
+            const tab = this._currentTrainerTab;
+            if (tab === "monitor") Trainer.renderMonitorPanel();
+            else if (tab === "content") Trainer.renderContentPanel();
+        });
+    },
+};
 };
 
 // ===== 启动 =====

@@ -94,12 +94,21 @@ const DB = {
             const raw = this._fromBase64(file.content);
             const remote = JSON.parse(raw);
 
-            // 将远端数据写入 localStorage
+            // 将远端数据写入 localStorage，记录是否有变化
             const keys = ["adminPassword", "dataVersion", "modules", "exams", "checklist", "scriptTemplates", "cognition", "trainees"];
+            let changed = false;
             for (const key of keys) {
                 if (remote[key] !== undefined) {
-                    localStorage.setItem(key, typeof remote[key] === "string" ? remote[key] : JSON.stringify(remote[key]));
+                    const newVal = typeof remote[key] === "string" ? remote[key] : JSON.stringify(remote[key]);
+                    if (localStorage.getItem(key) !== newVal) {
+                        localStorage.setItem(key, newVal);
+                        changed = true;
+                    }
                 }
+            }
+            // 数据有变化时通知 UI 自动刷新
+            if (changed) {
+                window.dispatchEvent(new CustomEvent("db-synced"));
             }
             return true;
         } catch (err) {
