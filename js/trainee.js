@@ -1009,9 +1009,15 @@ const Trainee = {
             </div>
         `;
 
-        // 初始化示范话术当前索引
+        // 初始化示范话术浏览状态：如果之前已完成过该场景，跳过浏览要求
         this._exampleIndex = 0;
-        this._viewedMaxExample = 0;
+        const totalExamples = (template.examples || []).length;
+        if (sc && sc.completed) {
+            // 已完成过 → 默认已全部浏览，第二版直接可提交
+            this._viewedMaxExample = totalExamples - 1;
+        } else {
+            this._viewedMaxExample = 0;
+        }
     },
 
     /** 示范话术当前索引 */
