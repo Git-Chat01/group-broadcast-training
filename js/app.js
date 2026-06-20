@@ -20,9 +20,9 @@ const App = {
     /** 登录流程状态：null | "login" | "setup" */
     _loginState: null,
 
-    init() {
-        // 1. 初始化数据
-        DB.init(Defaults);
+    async init() {
+        // 1. 初始化数据（等待 Firebase 同步完成）
+        await DB.init(Defaults);
 
         // 2. 加载 JSZip 和 XLSX（CDN 动态加载）
         this.loadLibs();

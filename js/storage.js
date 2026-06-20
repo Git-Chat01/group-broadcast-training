@@ -40,11 +40,134 @@ function toggleAccordion(catId) {
 
 const DB = {
 
+    // ===== Firebase 同步层 =====
+
+    /** 防止 Firebase onValue 监听器触发时重复写入 localStorage 的标记 */
+    _syncing: false,
+
+    /** 将单个 key 的值推送到 Firebase */
+    async _syncKeyToFirebase(key) {
+        if (!firebaseDB) return;
+        try {
+            this._syncing = true;
+            const raw = localStorage.getItem(key);
+            if (raw === null) return;
+            let data;
+            try { data = JSON.parse(raw); } catch (e) { data = raw; }
+            if (key === "trainees" && data && typeof data === "object") {
+                // 按新人粒度分别推送，避免多人同时写入互相覆盖
+                const names = Object.keys(data);
+                for (const name of names) {
+                    await firebaseDB.ref("/cide/trainees/" + encodeURIComponent(name)).set(data[name]);
+                }
+            } else {
+                await firebaseDB.ref("/cide/" + key).set(data);
+            }
+        } catch (err) {
+            console.warn("[Firebase] 推送 " + key + " 失败：", err);
+        } finally {
+            this._syncing = false;
+        }
+    },
+
+    /** 从 Firebase 拉取指定 key */
+    async _pullKeyFromFirebase(key) {
+        if (!firebaseDB) return null;
+        try {
+            const snap = await firebaseDB.ref("/cide/" + key).once("value");
+            return snap.val();
+        } catch (err) {
+            console.warn("[Firebase] 拉取 " + key + " 失败：", err);
+            return null;
+        }
+    },
+
+    /** 从 Firebase 拉取全部数据到 localStorage */
+    async _pullAllFromFirebase() {
+        if (!firebaseDB) return;
+        try {
+            const snap = await firebaseDB.ref("/cide").once("value");
+            const remote = snap.val();
+            if (!remote) return; // 远端无数据，保留本地
+
+            // 写入全局键
+            const globalKeys = ["adminPassword", "dataVersion", "modules", "exams", "checklist", "scriptTemplates", "cognition"];
+            for (const key of globalKeys) {
+                if (remote[key] !== undefined) {
+                    localStorage.setItem(key, typeof remote[key] === "string" ? remote[key] : JSON.stringify(remote[key]));
+                }
+            }
+
+            // 合并 trainees：远端 trainees 按新人粒度合并到本地
+            if (remote.trainees) {
+                const localTrainees = this.getTrainees();
+                const remoteNames = Object.keys(remote.trainees).map(decodeURIComponent);
+                for (const name of remoteNames) {
+                    const remoteData = remote.trainees[encodeURIComponent(name)] || remote.trainees[name];
+                    // 远端数据覆盖本地同名新人（远端为最新）
+                    localTrainees[name] = remoteData;
+                }
+                localStorage.setItem("trainees", JSON.stringify(localTrainees));
+            }
+        } catch (err) {
+            console.warn("[Firebase] 全量拉取失败：", err);
+        }
+    },
+
+    /** 启动 Firebase 实时监听（远端变化 → 自动同步到 localStorage） */
+    _startFirebaseWatch() {
+        if (!firebaseDB) return;
+        firebaseDB.ref("/cide").on("value", (snap) => {
+            if (this._syncing) return; // 自己的写入触发的，跳过
+            const remote = snap.val();
+            if (!remote) return;
+
+            // 同步全局键
+            const globalKeys = ["adminPassword", "dataVersion", "modules", "exams", "checklist", "scriptTemplates", "cognition"];
+            for (const key of globalKeys) {
+                if (remote[key] !== undefined) {
+                    const localRaw = localStorage.getItem(key);
+                    const remoteRaw = typeof remote[key] === "string" ? remote[key] : JSON.stringify(remote[key]);
+                    if (localRaw !== remoteRaw) {
+                        localStorage.setItem(key, remoteRaw);
+                    }
+                }
+            }
+
+            // 合并 trainees
+            if (remote.trainees) {
+                const localTrainees = this.getTrainees();
+                let changed = false;
+                const remoteNames = Object.keys(remote.trainees);
+                for (const rawName of remoteNames) {
+                    const name = decodeURIComponent(rawName);
+                    const remoteData = remote.trainees[rawName];
+                    const localData = localTrainees[name];
+                    // 远端数据写入（覆盖同名）
+                    if (!localData || JSON.stringify(localData) !== JSON.stringify(remoteData)) {
+                        localTrainees[name] = remoteData;
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    localStorage.setItem("trainees", JSON.stringify(localTrainees));
+                }
+            }
+        });
+    },
+
+    // ===== 初始化 =====
+
     /**
-     * 初始化：版本号检测 + 智能合并
+     * 初始化：Firebase 拉取 → 版本号检测 + 智能合并 → Firebase 推送
      * 首次使用直接写入；代码更新后仅新增模块/试卷，不覆盖已有数据
      */
-    init(defaults) {
+    async init(defaults) {
+        // 1. 等待 Firebase 就绪，尝试从远端拉取最新数据
+        await firebaseReady;
+        if (firebaseDB) {
+            await this._pullAllFromFirebase();
+        }
         const storedVersion = localStorage.getItem("dataVersion");
         const codeVersion = String(typeof DATA_VERSION !== "undefined" ? DATA_VERSION : 1);
 
@@ -58,23 +181,31 @@ const DB = {
             localStorage.setItem("cognition", JSON.stringify(defaults.cognition || []));
             localStorage.setItem("trainees", JSON.stringify(defaults.trainees || {}));
             localStorage.setItem("dataVersion", codeVersion);
-            return;
+        } else if (storedVersion !== codeVersion) {
+            // 版本不一致：智能合并（仅合并模板/题库/清单数据）
+            this._mergeModules(defaults.modules || []);
+            this._mergeExams(defaults.exams || {});
+            this._mergeChecklist(defaults.checklist || []);
+            this._mergeScriptTemplates(defaults.scriptTemplates || []);
+            this._mergeCognition(defaults.cognition || []);
+            // ⚠️ 以下两项为运行态用户数据，任何情况下都不覆盖、不删除：
+            //    adminPassword — 培训师自设密码
+            //    trainees — 所有新人的考试记录、能力清单进度、话术版本
+            //    丢失这些数据 = 培训数据全毁，属于严重事故
+            localStorage.setItem("dataVersion", codeVersion);
         }
+        // 版本一致：无需合并，跳过
 
-        // 版本一致：无需更新
-        if (storedVersion === codeVersion) return;
-
-        // 版本不一致：智能合并（仅合并模板/题库/清单数据）
-        this._mergeModules(defaults.modules || []);
-        this._mergeExams(defaults.exams || {});
-        this._mergeChecklist(defaults.checklist || []);
-        this._mergeScriptTemplates(defaults.scriptTemplates || []);
-        this._mergeCognition(defaults.cognition || []);
-        // ⚠️ 以下两项为运行态用户数据，任何情况下都不覆盖、不删除：
-        //    adminPassword — 培训师自设密码
-        //    trainees — 所有新人的考试记录、能力清单进度、话术版本
-        //    丢失这些数据 = 培训数据全毁，属于严重事故
-        localStorage.setItem("dataVersion", codeVersion);
+        // 2. Firebase 可用时：推送本地最新数据到远端 + 启动实时监听
+        if (firebaseDB) {
+            // 推送全部 key 到 Firebase（确保远端与本地一致）
+            const allKeys = ["adminPassword", "dataVersion", "modules", "exams", "checklist", "scriptTemplates", "cognition", "trainees"];
+            for (const key of allKeys) {
+                await this._syncKeyToFirebase(key);
+            }
+            // 启动实时监听
+            this._startFirebaseWatch();
+        }
     },
 
     /**
@@ -191,6 +322,7 @@ const DB = {
     },
     setAdminPassword(newPwd) {
         localStorage.setItem("adminPassword", newPwd);
+        this._syncKeyToFirebase("adminPassword");
     },
 
     // ===== 培训模块 =====
@@ -200,6 +332,7 @@ const DB = {
     },
     saveModules(modules) {
         localStorage.setItem("modules", JSON.stringify(modules));
+        this._syncKeyToFirebase("modules");
     },
     addModule(mod) {
         const modules = this.getModules();
@@ -223,6 +356,7 @@ const DB = {
     },
     saveExams(exams) {
         localStorage.setItem("exams", JSON.stringify(exams));
+        this._syncKeyToFirebase("exams");
     },
     getExam(examId) {
         return this.getExams()[examId] || null;
@@ -245,6 +379,7 @@ const DB = {
     },
     saveChecklist(checklist) {
         localStorage.setItem("checklist", JSON.stringify(checklist));
+        this._syncKeyToFirebase("checklist");
     },
 
     // ===== 团播认知 =====
@@ -254,6 +389,7 @@ const DB = {
     },
     saveCognition(cards) {
         localStorage.setItem("cognition", JSON.stringify(cards));
+        this._syncKeyToFirebase("cognition");
     },
 
     // ===== 新人数据 =====
@@ -263,6 +399,7 @@ const DB = {
     },
     saveTrainees(trainees) {
         localStorage.setItem("trainees", JSON.stringify(trainees));
+        this._syncKeyToFirebase("trainees");
     },
 
     /** 获取所有新人数据（数组格式，含名字字段，供导出/遍历使用） */
@@ -437,6 +574,7 @@ const DB = {
     },
     saveScriptTemplates(templates) {
         localStorage.setItem("scriptTemplates", JSON.stringify(templates));
+        this._syncKeyToFirebase("scriptTemplates");
     },
 
     // ===== 新人话术版本 =====
@@ -645,8 +783,8 @@ const DB = {
     },
 
     /** 重置全部数据 */
-    resetAll(defaults) {
+    async resetAll(defaults) {
         localStorage.clear();
-        this.init(defaults);
+        await this.init(defaults);
     }
 };
