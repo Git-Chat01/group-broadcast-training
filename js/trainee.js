@@ -1130,38 +1130,25 @@ const Trainee = {
                 opt.selected = true;
                 sel.appendChild(opt);
             }
-            // 显示提交成功反馈
+            // 显示提交成功反馈（永久保持，切换版本时由 switchScriptVersion 重置）
             const submitBtn = document.querySelector(".btn-script-submit");
             if (submitBtn) {
                 submitBtn.textContent = "✓ 已提交";
                 submitBtn.style.background = "#E8F5E9";
                 submitBtn.style.color = "#34C759";
                 submitBtn.disabled = true;
-                setTimeout(() => {
-                    submitBtn.textContent = "提交";
-                    submitBtn.style.background = "";
-                    submitBtn.style.color = "";
-                    submitBtn.disabled = false;
-                }, 2000);
             }
         } else {
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
-            // Fix 5: 临时反馈而非永久禁用 — 用户可切版本继续提交
+            // 提交成功反馈（永久保持，切换版本时由 switchScriptVersion 重置）
             const submitBtn = document.querySelector(".btn-script-submit");
             if (submitBtn) {
-                const origText = submitBtn.textContent;
                 submitBtn.textContent = "✓ 已提交";
                 submitBtn.style.background = "#E8F5E9";
                 submitBtn.style.color = "#34C759";
                 submitBtn.disabled = true;
-                setTimeout(() => {
-                    submitBtn.textContent = origText;
-                    submitBtn.style.background = "";
-                    submitBtn.style.color = "";
-                    submitBtn.disabled = false;
-                }, 2000);
             }
         }
     },
@@ -1187,9 +1174,16 @@ const Trainee = {
     switchScriptVersion(templateId, versionNum) {
         const vn = parseInt(versionNum);
         if (vn === 0) {
-            // 新建版本：清空输入框
+            // 新建版本：清空输入框 + 重置提交按钮
             document.getElementById("scriptContentInput").value = "";
             document.getElementById("scriptVersionSelect").value = "0";
+            const submitBtn = document.querySelector(".btn-script-submit");
+            if (submitBtn) {
+                submitBtn.textContent = "提交";
+                submitBtn.style.background = "";
+                submitBtn.style.color = "";
+                submitBtn.disabled = false;
+            }
         } else {
             DB.setActiveScriptVersion(Auth.traineeName, templateId, vn);
             this.openScriptScene(templateId);
