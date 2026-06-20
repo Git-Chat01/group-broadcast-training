@@ -309,7 +309,6 @@ const App = {
         });
     },
 };
-};
 
 // ===== 启动 =====
 document.addEventListener("DOMContentLoaded", () => App.init());
