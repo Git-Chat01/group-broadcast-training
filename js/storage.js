@@ -729,6 +729,33 @@ const DB = {
         this.saveTrainees(trainees);
     },
 
+    /** 删除指定版本的场景话术 */
+    deleteScriptVersion(name, templateId, versionNum) {
+        const trainees = this.getTrainees();
+        if (!trainees[name] || !trainees[name].scripts) return false;
+        const sc = trainees[name].scripts[templateId];
+        if (!sc) return false;
+
+        // 移除指定版本
+        sc.versions = sc.versions.filter(v => v.version !== versionNum);
+
+        // 如果删除的是当前激活版本，切换到最新版本
+        if (sc.activeVersion === versionNum) {
+            sc.activeVersion = sc.versions.length > 0
+                ? sc.versions[sc.versions.length - 1].version
+                : 0;
+        }
+
+        // 如果所有版本都删完了，清理该场景的状态
+        if (sc.versions.length === 0) {
+            sc.status = "draft";
+            sc.completed = false;
+        }
+
+        this.saveTrainees(trainees);
+        return true;
+    },
+
     /** 培训师添加批注 */
     addScriptFeedback(name, templateId, versionNum, feedbackText) {
         const trainees = this.getTrainees();

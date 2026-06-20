@@ -963,6 +963,7 @@ const Trainee = {
                     <select class="script-version-select" id="scriptVersionSelect" onchange="Trainee.switchScriptVersion('${templateId}', this.value)">
                         ${versionOptions}
                     </select>
+                    ${activeV > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:1px solid #FFCDD2;font-size:12px;padding:4px 10px;white-space:nowrap;" onclick="Trainee.deleteScriptVersion('${templateId}', ${activeV})" title="删除当前版本">🗑 删除</button>` : ""}
                 </div>
 
                 <div class="script-section goal">
@@ -1186,6 +1187,25 @@ const Trainee = {
             }
         } else {
             DB.setActiveScriptVersion(Auth.traineeName, templateId, vn);
+            this.openScriptScene(templateId);
+        }
+    },
+
+    /** 删除当前版本话术 */
+    deleteScriptVersion(templateId, versionNum) {
+        const sc = DB.getScripts(Auth.traineeName)[templateId];
+        const versionCount = sc ? sc.versions.length : 0;
+
+        if (versionCount <= 1) {
+            alert("至少保留一个版本，无法删除。如需清空内容请直接编辑。");
+            return;
+        }
+
+        if (!confirm("确定要删除版本 " + versionNum + " 吗？此操作不可恢复。")) return;
+
+        const ok = DB.deleteScriptVersion(Auth.traineeName, templateId, versionNum);
+        if (ok) {
+            // 刷新页面显示最新状态
             this.openScriptScene(templateId);
         }
     },
