@@ -1158,7 +1158,7 @@ const Trainee = {
         }
     },
 
-    /** Fix 5: 基于批注创建新版本 — 切到新建、预填当前内容、聚焦输入框 */
+    /** 基于批注创建新版本 — 切到新建、预填当前内容、聚焦输入框 */
     startRevise(templateId) {
         // 切到「新建」
         const sel = document.getElementById("scriptVersionSelect");
@@ -1166,9 +1166,16 @@ const Trainee = {
         // 预填当前版本内容（方便在原有基础上改）
         const contentEl = document.getElementById("scriptContentInput");
         if (contentEl) {
-            // 保留当前内容，聚焦到末尾
             contentEl.focus();
             contentEl.setSelectionRange(contentEl.value.length, contentEl.value.length);
+        }
+        // 重置提交按钮（之前可能是「✓ 已提交」禁用状态）
+        const submitBtn = document.querySelector(".btn-script-submit");
+        if (submitBtn) {
+            submitBtn.textContent = "提交";
+            submitBtn.style.background = "";
+            submitBtn.style.color = "";
+            submitBtn.disabled = false;
         }
         // 滚动到输入区
         const inputBar = document.querySelector(".script-input-bar");
