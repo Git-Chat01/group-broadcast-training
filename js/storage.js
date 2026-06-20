@@ -69,10 +69,11 @@ const DB = {
         return new TextDecoder().decode(bytes);
     },
 
-    /** GitHub 是否已配置（token 非占位值） */
+    /** GitHub 是否已配置（token 已保存到 localStorage） */
     _githubReady() {
-        return !!(typeof GITHUB_CONFIG !== "undefined" && GITHUB_CONFIG &&
-                  GITHUB_CONFIG.token && !GITHUB_CONFIG.token.includes("YOUR_TOKEN"));
+        if (typeof GITHUB_CONFIG === "undefined" || !GITHUB_CONFIG) return false;
+        const token = GITHUB_CONFIG.token;  // getter 从 localStorage 读取
+        return !!(token && token.startsWith("ghp_"));
     },
 
     /** 从 GitHub 拉取 db.json 并写入 localStorage */

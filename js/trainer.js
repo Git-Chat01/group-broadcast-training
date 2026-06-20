@@ -54,6 +54,20 @@ const Trainer = {
                 </div>
                 <p class="form-hint" id="passwordMsg" style="display:none;margin-top:8px;"></p>
             </div>
+
+            <!-- 同步设置（GitHub Token） -->
+            <div class="progress-section">
+                <h3>☁️ 同步设置</h3>
+                <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">
+                    填入 GitHub Personal Access Token 后，新人手机端的数据会自动同步到你的电脑。<br>
+                    <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" style="color:var(--primary);">点此创建 Token</a>（勾选 repo 权限，过期时间选 No expiration）
+                </p>
+                <div style="display:flex;gap:8px;max-width:400px;">
+                    <input type="password" class="form-input" id="inputSyncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="flex:1;">
+                    <button class="btn btn-primary btn-sm" id="btnSaveSyncToken">保存</button>
+                </div>
+                <p class="form-hint" id="syncTokenMsg" style="margin-top:8px;"></p>
+            </div>
         `;
 
         document.getElementById("btnChangePassword").addEventListener("click", () => {
@@ -79,6 +93,28 @@ const Trainer = {
             document.getElementById("inputNewPassword").value = "";
             document.getElementById("inputConfirmPassword").value = "";
         });
+
+        // 同步 Token 保存
+        document.getElementById("btnSaveSyncToken").addEventListener("click", () => {
+            const token = document.getElementById("inputSyncToken").value.trim();
+            const msgEl = document.getElementById("syncTokenMsg");
+            const showMsg = (text, ok) => {
+                msgEl.textContent = text;
+                msgEl.style.color = ok ? "var(--success)" : "var(--danger)";
+                msgEl.style.display = "block";
+            };
+            if (!token) { showMsg("请输入 Token", false); return; }
+            if (!token.startsWith("ghp_")) { showMsg("Token 格式不正确，应以 ghp_ 开头", false); return; }
+            localStorage.setItem("github_sync_token", token);
+            showMsg("Token 已保存！云端同步已激活 ✅", true);
+            document.getElementById("inputSyncToken").value = "";
+        });
+
+        // 加载已保存的 Token 到输入框（脱敏显示）
+        const savedToken = localStorage.getItem("github_sync_token");
+        if (savedToken) {
+            document.getElementById("inputSyncToken").placeholder = "已设置（" + savedToken.substring(0, 8) + "***），可重新粘贴覆盖";
+        }
     },
 
     renderExamListForTrainer() {
