@@ -755,9 +755,13 @@ const Trainee = {
             const s = scripts[t.id];
             if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) totalWritten++;
             if (s && s.status === "reviewed") totalReviewed++;
-            // Fix 2: 统计未读批注
+            // 统计未读批注
             if (s && s.feedbackRead === false) unreadCount++;
         });
+
+        // 更新 Tab 红点
+        const dot = document.getElementById("scriptTabDot");
+        if (dot) dot.style.display = unreadCount > 0 ? "inline-block" : "none";
 
         // 按分类分组
         const groups = new Map();

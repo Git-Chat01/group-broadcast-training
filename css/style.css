@@ -212,6 +212,19 @@ body {
     border-radius: 2px 2px 0 0;
 }
 
+/* Tab 红点提醒 */
+.tab-btn-script { position: relative; }
+.tab-dot {
+    position: absolute;
+    top: 8px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background: #FF3B30;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+}
+
 /* ========== 主内容 ========== */
 .main-content { max-width: 900px; margin: 24px auto; padding: 0 16px; }
 .tab-panel { display: none; }
