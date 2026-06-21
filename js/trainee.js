@@ -751,7 +751,7 @@ const Trainee = {
 
         // 统计
         let totalWritten = 0, totalReviewed = 0, unreadCount = 0;
-        templates.forEach(t => {
+        templates.forEach(function(t) {
             const s = scripts[t.id];
             if (s && (s.completed || s.status === "submitted" || s.status === "reviewed")) totalWritten++;
             if (s && s.status === "reviewed") totalReviewed++;
@@ -816,12 +816,20 @@ const Trainee = {
                             }
                             let badgeHTML = "";
                             const activeVer = s ? s.versions[s.activeVersion - 1] : null;
-                            // Fix 2: 未读批注 → 红点「新批注」，已读 → 灰色「有批注」
-                            if (s && s.status === "reviewed" && activeVer && activeVer.feedback) {
+                            // 二级红点：只要有任意版本被批注过就显示实心圆点
+                            var hasAnyFeedback = false;
+                            if (s && s.versions && s.versions.length > 0) {
+                                for (var vi = 0; vi < s.versions.length; vi++) {
+                                    if (s.versions[vi].feedback) { hasAnyFeedback = true; break; }
+                                }
+                            }
+                            if (hasAnyFeedback) {
                                 if (s.feedbackRead === false) {
-                                    badgeHTML = '<span class="script-item-badge feedback-unread">🔴 新批注</span>';
+                                    // 未读 → 实心红点
+                                    badgeHTML = '<span class="script-scene-dot" title="有新批注"></span>';
                                 } else {
-                                    badgeHTML = '<span class="script-item-badge feedback">有批注</span>';
+                                    // 已读 → 灰色圆点
+                                    badgeHTML = '<span class="script-scene-dot read" title="已读批注"></span>';
                                 }
                             }
                             // 「我的话术」模式：显示内容摘要
@@ -902,12 +910,13 @@ const Trainee = {
             ? (sc.versions.find(v => v.version === activeV) || {}).feedback
             : null;
 
-        // 版本选项
+        // 版本选项（三级红点：有批注的版本用 ● 标识）
         let versionOptions = '<option value="0">新建</option>';
         if (sc) {
-            sc.versions.forEach(v => {
+            sc.versions.forEach(function(v) {
                 const sel = v.version === activeV ? " selected" : "";
-                versionOptions += '<option value="' + v.version + '"' + sel + '>版本 ' + v.version + '</option>';
+                const prefix = v.feedback ? '● ' : '';
+                versionOptions += '<option value="' + v.version + '"' + sel + '>' + prefix + '版本 ' + v.version + '</option>';
             });
         }
 
@@ -931,11 +940,11 @@ const Trainee = {
         let feedbackHTML = "";
         const allFeedbackVers = sc ? sc.versions.filter(v => v.feedback) : [];
         if (allFeedbackVers.length > 0) {
-            const chainItems = allFeedbackVers.map(v => {
+            const chainItems = allFeedbackVers.map(function(v) {
                 const isCurrent = v.version === activeV;
                 return `
                     <div class="feedback-chain-item${isCurrent ? ' feedback-chain-current' : ''}">
-                        <div class="feedback-chain-ver">版本 ${v.version}${isCurrent ? ' · 当前' : ''}</div>
+                        <div class="feedback-chain-ver"><span class="script-scene-dot" style="margin-left:0;margin-right:6px;vertical-align:middle;"></span>版本 ${v.version}${isCurrent ? ' · 当前' : ''}</div>
                         <div class="feedback-chain-text">${this.escapeHtml(v.feedback.text)}</div>
                         <div class="feedback-chain-meta">${v.feedback.trainer} · ${v.feedback.createdAt}</div>
                     </div>`;
@@ -947,9 +956,10 @@ const Trainee = {
                 </div>`;
         }
 
-        // Fix 5: 当前版本有批注时，显示「基于批注修改」快捷按钮
+        // Fix 5: 只要有任意版本被批注过，就显示「基于批注创建新版本」按钮
+        // （不用 currentFeedback 判断——提交新版本后当前版本无批注，但旧版本的批注仍然有效）
         let reviseBtnHTML = "";
-        if (currentFeedback) {
+        if (allFeedbackVers.length > 0) {
             reviseBtnHTML = `
                 <div class="feedback-revise-wrap">
                     <button class="btn btn-outline btn-sm feedback-revise-btn" onclick="Trainee.startRevise('${templateId}')">
@@ -1156,6 +1166,11 @@ const Trainee = {
                 submitBtn.disabled = true;
             }
         }
+
+        // 提交后收起键盘 + 复位页面位置，防止 iOS 聚焦放大后无法复原
+        const inputEl = document.getElementById("scriptContentInput");
+        if (inputEl) inputEl.blur();
+        window.scrollTo(0, 0);
     },
 
     /** 基于批注创建新版本 — 切到新建、预填当前内容、聚焦输入框 */

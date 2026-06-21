@@ -187,7 +187,8 @@ const DB = {
     _startGitHubPolling() {
         if (!this._githubReady() || this._pollTimer) return;
         this._pollTimer = setInterval(async () => {
-            if (this._syncing) return;    // 正在推送，跳过
+            // 正在推送或 2s 内有待推送 → 跳过，避免把 GitHub 旧数据拉下来覆盖本地新修改
+            if (this._syncing || this._syncPending) return;
             await this._pullFromGitHub();
         }, 30000);
     },

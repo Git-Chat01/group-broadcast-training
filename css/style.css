@@ -1433,16 +1433,18 @@ body {
     font-size: 14px;
     color: var(--text-primary);
 }
-.script-item-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
+/* 场景卡片红点（二级话术标记） */
+.script-scene-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #FF3B30;
+    border-radius: 50%;
     flex-shrink: 0;
-    font-weight: 500;
+    margin-left: 6px;
 }
-.script-item-badge.feedback {
-    background: #FFE5E5;
-    color: #FF3B30;
+.script-scene-dot.read {
+    background: #C0C0C0;
 }
 
 /* --- 场景详情页 --- */
@@ -1676,7 +1678,7 @@ body {
     min-height: 56px;
     max-height: 180px;
     padding: 12px 14px;
-    font-size: 14px;
+    font-size: 16px;  /* 16px 防止 iOS Safari 聚焦时自动放大页面 */
     line-height: 1.55;
     border: 1.5px solid rgba(0,0,0,0.1);
     border-radius: 12px;
@@ -1849,12 +1851,6 @@ body {
     flex-shrink: 0;
 }
 
-/* ===== Fix 2: 未读批注徽章 ===== */
-.script-item-badge.feedback-unread {
-    background: #FF3B30;
-    color: #fff;
-    font-weight: 600;
-}
 
 /* ===== Fix 4: 反馈历史链 ===== */
 .feedback-chain-item {
