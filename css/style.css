@@ -1700,18 +1700,22 @@ body {
 }
 .script-input-actions {
     display: flex;
-    gap: 8px;
+    justify-content: center;
+    gap: 10px;
     margin-top: 10px;
 }
 .script-input-actions button {
-    flex: 1;
-    min-height: 46px;
+    flex: 0 1 auto;
+    min-width: 64px;
+    padding: 0 14px;
+    min-height: 42px;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     border: none;
     transition: all 0.15s;
+    white-space: nowrap;
 }
 .btn-script-draft {
     background: #F2F2F7;
