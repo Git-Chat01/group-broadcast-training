@@ -1,0 +1,225 @@
+/**
+ * api.js — 飞书多维表格数据读写封装
+ *
+ * 所有对飞书 Base 的操作都经过这里
+ * 底层通过 Cloudflare Worker 代理调用飞书 Open API
+ *
+ * 飞书 Base API 文档：
+ * https://open.feishu.cn/document/server-docs/docs/bitable-v1/bitable-overview
+ */
+
+const API = {
+  /**
+   * 通用请求 — 拼 Worker 地址 + 飞书 API 路径
+   */
+  async _request(method, feishuPath, body) {
+    const url = WORKER_URL + "/api" + feishuPath;
+    const opts = {
+      method,
+      headers: { "Content-Type": "application/json" },
+    };
+    if (body) opts.body = JSON.stringify(body);
+
+    const resp = await fetch(url, opts);
+    const data = await resp.json();
+
+    if (data.code !== 0) {
+      console.error("API 错误:", data);
+      throw new Error(data.msg || "请求失败");
+    }
+    return data;
+  },
+
+  /**
+   * 获取单件衣服 — 扫码页用
+   * 按「编号」字段搜索，返回第一条匹配记录
+   */
+  async getItem(itemId) {
+    const data = await this._request(
+      "POST",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/search`,
+      {
+        filter: {
+          conjunction: "and",
+          conditions: [
+            {
+              field_name: "编号",
+              operator: "is",
+              value: [itemId],
+            },
+          ],
+        },
+        page_size: 1,
+      }
+    );
+    if (!data.data.items || data.data.items.length === 0) return null;
+    return this._formatRecord(data.data.items[0]);
+  },
+
+  /**
+   * 获取所有衣服 — 管理后台用
+   * 支持按状态筛选
+   */
+  async listItems(statusFilter) {
+    const body = { page_size: 500 };
+    if (statusFilter) {
+      body.filter = {
+        conjunction: "and",
+        conditions: [
+          {
+            field_name: "状态",
+            operator: "is",
+            value: [statusFilter],
+          },
+        ],
+      };
+    }
+    const data = await this._request(
+      "POST",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/search`,
+      body
+    );
+    return (data.data.items || []).map((r) => this._formatRecord(r));
+  },
+
+  /**
+   * 借出 — 更新状态、借用人、借出时间
+   */
+  async borrowItem(recordId, borrower, itemId) {
+    const now = new Date();
+    const dateStr =
+      now.getFullYear() +
+      "/" +
+      String(now.getMonth() + 1).padStart(2, "0") +
+      "/" +
+      String(now.getDate()).padStart(2, "0");
+    // 预计归还默认明天
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const returnStr =
+      tomorrow.getFullYear() +
+      "/" +
+      String(tomorrow.getMonth() + 1).padStart(2, "0") +
+      "/" +
+      String(tomorrow.getDate()).padStart(2, "0");
+
+    return this._request(
+      "PUT",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
+      {
+        fields: {
+          状态: "已借出",
+          借用人: borrower,
+          借出时间: dateStr,
+          预计归还: returnStr,
+        },
+      }
+    );
+  },
+
+  /**
+   * 归还
+   * @param {boolean} needWash — 是否穿过需要洗
+   */
+  async returnItem(recordId, needWash) {
+    const fields = {
+      状态: "在库",
+      借用人: "",
+      借出时间: "",
+      预计归还: "",
+    };
+    if (needWash) {
+      fields["清洗状态"] = "待清洗";
+    }
+    return this._request(
+      "PUT",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
+      { fields }
+    );
+  },
+
+  /**
+   * 标记待清洗
+   */
+  async markWash(recordId) {
+    return this._request(
+      "PUT",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
+      {
+        fields: {
+          清洗状态: "待清洗",
+        },
+      }
+    );
+  },
+
+  /**
+   * 新增衣服 — 管理员用
+   */
+  async addItem(fields) {
+    return this._request(
+      "POST",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records`,
+      { fields }
+    );
+  },
+
+  /**
+   * 更新衣服信息 — 管理员用
+   */
+  async updateItem(recordId, fields) {
+    return this._request(
+      "PUT",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
+      { fields }
+    );
+  },
+
+  // ---- 统计 ----
+
+  /**
+   * 获取各状态数量 — 管理后台概览用
+   */
+  async getStats() {
+    const all = await this.listItems();
+    const stats = { total: all.length, "在库": 0, "已借出": 0, "待清洗": 0, "已报修": 0 };
+    all.forEach((item) => {
+      const s = item.status || "在库";
+      if (stats[s] !== undefined) stats[s]++;
+    });
+    // 统计待洗
+    stats["待清洗"] = all.filter((i) => i.washStatus === "待清洗").length;
+    return stats;
+  },
+
+  // ---- 内部方法 ----
+
+  /**
+   * 把飞书返回的 record 对象拍平成我们需要的格式
+   */
+  _formatRecord(record) {
+    const f = record.fields || {};
+    return {
+      id: f["编号"] || "",
+      name: f["名称"] || "",
+      style: f["风格"] || "",
+      category: f["分类"] || "",
+      price: f["价格"] || 0,
+      link: f["购买链接"] || "",
+      stylingNote: f["搭配说明"] || "",
+      status: f["状态"] || "在库",
+      borrower: f["借用人"] || "",
+      borrowTime: f["借出时间"] || "",
+      expectedReturn: f["预计归还"] || "",
+      washStatus: f["清洗状态"] || "干净",
+      remark: f["备注"] || "",
+      // 搭配图附件
+      images: (f["搭配图"] || []).map((att) => ({
+        url: att.url || att.tmp_url || "",
+        name: att.name || "",
+      })),
+      // 飞书记录 ID（更新时需要）
+      recordId: record.record_id,
+    };
+  },
+};

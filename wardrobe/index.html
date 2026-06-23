@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>服装库管理</title>
+  <link rel="stylesheet" href="css/style.css?v=1" />
+</head>
+<body>
+  <!-- 登录页 -->
+  <div class="view" id="view-login">
+    <div class="login-container">
+      <h1 class="login-title">👗 服装库管理</h1>
+      <p class="login-subtitle">输入管理密码进入后台</p>
+      <input type="password" class="input" id="inputPassword" placeholder="请输入管理密码" />
+      <div class="login-error" id="loginError" style="display:none"></div>
+      <button class="btn btn-primary btn-block" id="btnLogin" style="margin-top:12px;">进入后台</button>
+    </div>
+  </div>
+
+  <!-- 管理后台 -->
+  <div class="view" id="view-admin" style="display:none;">
+    <header class="admin-header">
+      <h1>👗 服装库管理</h1>
+      <button class="btn btn-sm btn-outline" id="btnLogout">退出</button>
+    </header>
+
+    <!-- 统计概览 -->
+    <div class="admin-stats" id="adminStats"></div>
+
+    <!-- 工具栏 -->
+    <div class="admin-toolbar">
+      <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-filter="">全部</button>
+        <button class="filter-tab" data-filter="在库">在库</button>
+        <button class="filter-tab" data-filter="已借出">已借出</button>
+        <button class="filter-tab" data-filter="待清洗">待清洗</button>
+        <button class="filter-tab" data-filter="已报修">已报修</button>
+      </div>
+    </div>
+
+    <!-- 衣服列表 -->
+    <div class="admin-list" id="adminList">
+      <div class="loading">加载中...</div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none"></div>
+
+  <script src="js/config.js?v=1"></script>
+  <script src="js/api.js?v=1"></script>
+  <script src="js/admin.js?v=1"></script>
+</body>
+</html>
