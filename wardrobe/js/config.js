@@ -7,6 +7,7 @@
  */
 
 // Cloudflare Worker 地址（部署后替换）
+// 2026-06-24: workers.dev 国内被屏蔽，改用自定义域名
 const WORKER_URL = "https://api.aivar.cc";
 
 // 飞书多维表格标识
