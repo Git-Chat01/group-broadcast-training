@@ -7,7 +7,7 @@
  */
 
 // Cloudflare Worker 地址（部署后替换）
-const WORKER_URL = "https://wardrobe-api.1103386200.workers.dev";
+const WORKER_URL = "https://api.aivar.cc";
 
 // 飞书多维表格标识
 const BASE_TOKEN = "HwTEbujlFa4JFWskg7LcicTgnJd";
