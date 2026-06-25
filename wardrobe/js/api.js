@@ -204,28 +204,52 @@ const API = {
 
   /**
    * 把飞书返回的 record 对象拍平成我们需要的格式
+   *
+   * 飞书 bitable v1 API 返回的字段格式：
+   * - 文本字段 → rich text 数组 [{text: "...", type: "text"}] 或纯字符串
+   * - URL 字段  → {link: "...", text: "...", type: "url"} 或纯字符串
+   * - 单选字段 → 纯字符串
+   * - 数字字段 → 纯数字
+   * - 附件字段 → [{file_token: "...", name: "...", ...}]
    */
   _formatRecord(record) {
     const f = record.fields || {};
+
+    // 提取文本字段：兼容 rich text 数组和纯字符串两种格式
+    function getText(val) {
+      if (Array.isArray(val)) {
+        return val.map(function (v) { return (v && v.text) || ""; }).join("");
+      }
+      return typeof val === "string" ? val : String(val || "");
+    }
+
+    // 提取 URL 字段：兼容 {link, text, type} 对象和纯字符串
+    function getUrl(val) {
+      if (val && typeof val === "object" && val.link) return val.link;
+      return typeof val === "string" ? val : "";
+    }
+
     return {
-      id: f["编号"] || "",
-      name: f["名称"] || "",
-      style: f["风格"] || "",
-      category: f["分类"] || "",
+      id: getText(f["编号"]),
+      name: getText(f["名称"]),
+      style: getText(f["风格"]),
+      category: getText(f["分类"]),
       price: f["价格"] || 0,
-      link: f["购买链接"] || "",
-      stylingNote: f["搭配说明"] || "",
-      status: f["状态"] || "在库",
-      borrower: f["借用人"] || "",
-      borrowTime: f["借出时间"] || "",
-      expectedReturn: f["预计归还"] || "",
-      washStatus: f["清洗状态"] || "干净",
-      remark: f["备注"] || "",
+      link: getUrl(f["购买链接"]),
+      stylingNote: getText(f["搭配说明"]),
+      status: getText(f["状态"]) || "在库",
+      borrower: getText(f["借用人"]),
+      borrowTime: getText(f["借出时间"]),
+      expectedReturn: getText(f["预计归还"]),
+      washStatus: getText(f["清洗状态"]) || "干净",
+      remark: getText(f["备注"]),
       // 搭配图附件 — 用 file_token 走 Worker 代理，避免 tmp_url 过期
-      images: (f["搭配图"] || []).map((att) => ({
-        url: WORKER_URL + "/image/" + (att.file_token || ""),
-        name: att.name || "",
-      })),
+      images: (f["搭配图"] || []).map(function (att) {
+        return {
+          url: WORKER_URL + "/image/" + (att.file_token || ""),
+          name: att.name || "",
+        };
+      }),
       // 飞书记录 ID（更新时需要）
       recordId: record.record_id,
     };
