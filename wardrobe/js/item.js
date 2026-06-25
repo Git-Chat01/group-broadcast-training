@@ -224,7 +224,8 @@
           // 刷新页面状态
           setTimeout(() => init(), 800);
         } catch (err) {
-          showToast("操作失败，请重试");
+          console.error("借出失败:", err);
+          showToast("操作失败：" + (err.message || "未知错误"));
           return false;
         }
       }
@@ -250,7 +251,8 @@
         showToast("已归还，已标记待清洗");
         setTimeout(() => init(), 800);
       } catch (err) {
-        showToast("操作失败，请重试");
+        console.error("归还失败:", err);
+        showToast("操作失败：" + (err.message || "未知错误"));
       }
     };
 
@@ -261,7 +263,8 @@
         showToast("已归还");
         setTimeout(() => init(), 800);
       } catch (err) {
-        showToast("操作失败，请重试");
+        console.error("归还失败:", err);
+        showToast("操作失败：" + (err.message || "未知错误"));
       }
     };
   }
@@ -278,7 +281,8 @@
           showToast("已标记");
           setTimeout(() => init(), 800);
         } catch (err) {
-          showToast("操作失败，请重试");
+          console.error("标记清洗失败:", err);
+          showToast("操作失败：" + (err.message || "未知错误"));
           return false;
         }
       }
