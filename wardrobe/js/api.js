@@ -221,9 +221,9 @@ const API = {
       expectedReturn: f["预计归还"] || "",
       washStatus: f["清洗状态"] || "干净",
       remark: f["备注"] || "",
-      // 搭配图附件
+      // 搭配图附件 — 用 file_token 走 Worker 代理，避免 tmp_url 过期
       images: (f["搭配图"] || []).map((att) => ({
-        url: att.url || att.tmp_url || "",
+        url: WORKER_URL + "/image/" + (att.file_token || ""),
         name: att.name || "",
       })),
       // 飞书记录 ID（更新时需要）

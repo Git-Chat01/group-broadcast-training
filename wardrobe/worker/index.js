@@ -60,6 +60,52 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // 图片代理：飞书附件 tmp_url 有短时效，用 file_token 通过 Worker 代理下载
+    // URL 格式：/image/{file_token}
+    if (path.startsWith("/image/")) {
+      const fileToken = path.replace("/image/", "");
+      if (!fileToken) {
+        return new Response("Missing file_token", { status: 400 });
+      }
+
+      try {
+        const token = await getTenantToken(env);
+        const resp = await fetch(
+          `https://open.feishu.cn/open-apis/drive/v1/medias/${fileToken}/download`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!resp.ok) {
+          return new Response("Image not found", { status: resp.status });
+        }
+
+        const imageData = await resp.arrayBuffer();
+        const contentType = resp.headers.get("Content-Type") || "image/jpeg";
+
+        return new Response(imageData, {
+          status: 200,
+          headers: {
+            "Content-Type": contentType,
+            "Access-Control-Allow-Origin": "*",
+            "Cache-Control": "public, max-age=86400",
+          },
+        });
+      } catch (err) {
+        return new Response(
+          JSON.stringify({ error: true, message: err.message }),
+          {
+            status: 500,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          }
+        );
+      }
+    }
+
     // 只代理 /api/ 路径，防止被滥用
     if (!path.startsWith("/api/")) {
       return new Response("Not Found", { status: 404 });
