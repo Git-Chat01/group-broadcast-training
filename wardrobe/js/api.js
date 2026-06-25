@@ -120,17 +120,18 @@ const API = {
   /**
    * 归还
    * @param {boolean} needWash — 是否穿过需要洗
+   *
+   * 关键设计：如果穿了需要洗，状态直接设为"待清洗"而非"在库"
+   * 这样单品页会显示 🟡 待清洗 + "洗完直接借"按钮，防止下一个人借到脏衣服
    */
   async returnItem(recordId, needWash) {
     const fields = {
-      状态: "在库",
+      状态: needWash ? "待清洗" : "在库",
       借用人: "",
       借出时间: "",
       预计归还: "",
+      清洗状态: needWash ? "待清洗" : "干净",
     };
-    if (needWash) {
-      fields["清洗状态"] = "待清洗";
-    }
     return this._request(
       "PUT",
       `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
@@ -139,7 +140,7 @@ const API = {
   },
 
   /**
-   * 标记待清洗
+   * 标记待清洗 — 同时更新状态和清洗状态，确保单品页正确拦截
    */
   async markWash(recordId) {
     return this._request(
@@ -147,6 +148,7 @@ const API = {
       `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/${recordId}`,
       {
         fields: {
+          状态: "待清洗",
           清洗状态: "待清洗",
         },
       }
@@ -179,6 +181,9 @@ const API = {
 
   /**
    * 获取各状态数量 — 管理后台概览用
+   *
+   * 统计口径：以「状态」字段为准（归还/标记清洗时同步更新）
+   * 兼容旧数据：washStatus="待清洗" 但 status≠"待清洗" 的遗留记录也计入
    */
   async getStats() {
     const all = await this.listItems();
@@ -187,8 +192,11 @@ const API = {
       const s = item.status || "在库";
       if (stats[s] !== undefined) stats[s]++;
     });
-    // 统计待洗
-    stats["待清洗"] = all.filter((i) => i.washStatus === "待清洗").length;
+    // 兼容旧数据：清洗状态标记了待清洗但主状态未同步的（修复前产生的数据）
+    const legacyWash = all.filter(
+      (i) => i.washStatus === "待清洗" && i.status !== "待清洗"
+    ).length;
+    stats["待清洗"] += legacyWash;
     return stats;
   },
 

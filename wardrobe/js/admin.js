@@ -92,8 +92,14 @@
   function renderStats() {
     const stats = { total: items.length, "在库": 0, "已借出": 0, "待清洗": 0, "已报修": 0 };
     items.forEach((i) => {
-      if (stats[i.status] !== undefined) stats[i.status]++;
-      if (i.washStatus === "待清洗") stats["待清洗"]++;
+      const s = i.status || "在库";
+      if (stats[s] !== undefined) stats[s]++;
+    });
+    // 兼容旧数据：清洗状态标记了待清洗但主状态未同步的遗留记录
+    items.forEach((i) => {
+      if (i.washStatus === "待清洗" && i.status !== "待清洗") {
+        stats["待清洗"]++;
+      }
     });
 
     $("#adminStats").innerHTML =

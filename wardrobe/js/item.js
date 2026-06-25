@@ -17,6 +17,11 @@
 
   // ---- 初始化 ----
   async function init() {
+    // 点击弹窗遮罩关闭弹窗
+    $("#modalOverlay").onclick = function (e) {
+      if (e.target === this) closeModal();
+    };
+
     const id = new URLSearchParams(window.location.search).get("id");
     if (!id) {
       showEmpty("未指定衣服编号");
@@ -94,23 +99,46 @@
       this.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect fill='%23f0f0f0' width='300' height='300'/><text x='150' y='155' text-anchor='middle' fill='%23999' font-size='14'>图片加载失败</text></svg>";
     };
 
-    // 左右滑动切换（简单实现：点击左右半区）
+    // 多图切换：支持点击左右半区 + 触摸滑动
     if (images.length > 1) {
       mainImg.style.cursor = "pointer";
+
+      // 切换到指定索引
+      function switchTo(newIndex) {
+        currentImgIndex = ((newIndex % images.length) + images.length) % images.length;
+        mainImg.src = images[currentImgIndex].url;
+        updateDots(images.length);
+      }
+
+      // PC：点击左右半区切换
       mainImg.onclick = function (e) {
         const rect = this.getBoundingClientRect();
         const x = e.clientX - rect.left;
         if (x < rect.width / 2) {
-          // 左半边 — 上一张
-          currentImgIndex =
-            (currentImgIndex - 1 + images.length) % images.length;
+          switchTo(currentImgIndex - 1);
         } else {
-          // 右半边 — 下一张
-          currentImgIndex = (currentImgIndex + 1) % images.length;
+          switchTo(currentImgIndex + 1);
         }
-        this.src = images[currentImgIndex].url;
-        updateDots(images.length);
       };
+
+      // 移动端：触摸滑动
+      let touchStartX = 0;
+      mainImg.addEventListener("touchstart", function (e) {
+        touchStartX = e.touches[0].clientX;
+      }, { passive: true });
+
+      mainImg.addEventListener("touchend", function (e) {
+        const deltaX = e.changedTouches[0].clientX - touchStartX;
+        // 滑动距离超过 50px 才算有效滑动
+        if (Math.abs(deltaX) > 50) {
+          e.preventDefault(); // 阻止页面滚动
+          if (deltaX < 0) {
+            switchTo(currentImgIndex + 1); // 左滑 → 下一张
+          } else {
+            switchTo(currentImgIndex - 1); // 右滑 → 上一张
+          }
+        }
+      });
     }
 
     // 小圆点
