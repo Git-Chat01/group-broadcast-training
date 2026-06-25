@@ -84,24 +84,19 @@ const API = {
 
   /**
    * 借出 — 更新状态、借用人、借出时间
+   *
+   * 借出时间和预计归还是 DateTime 字段（type=5），必须传毫秒时间戳
+   * 飞书表单里配置的日期格式为 yyyy/MM/dd
    */
   async borrowItem(recordId, borrower, itemId) {
     const now = new Date();
-    const dateStr =
-      now.getFullYear() +
-      "/" +
-      String(now.getMonth() + 1).padStart(2, "0") +
-      "/" +
-      String(now.getDate()).padStart(2, "0");
+    // 一天的毫秒数，用于计算"明天"
+    const DAY_MS = 24 * 60 * 60 * 1000;
+
+    // DateTime 字段传毫秒时间戳
+    const borrowTs = now.getTime();
     // 预计归还默认明天
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const returnStr =
-      tomorrow.getFullYear() +
-      "/" +
-      String(tomorrow.getMonth() + 1).padStart(2, "0") +
-      "/" +
-      String(tomorrow.getDate()).padStart(2, "0");
+    const returnTs = borrowTs + DAY_MS;
 
     return this._request(
       "PUT",
@@ -110,8 +105,8 @@ const API = {
         fields: {
           状态: "已借出",
           借用人: borrower,
-          借出时间: dateStr,
-          预计归还: returnStr,
+          借出时间: borrowTs,
+          预计归还: returnTs,
         },
       }
     );
@@ -123,13 +118,15 @@ const API = {
    *
    * 关键设计：如果穿了需要洗，状态直接设为"待清洗"而非"在库"
    * 这样单品页会显示 🟡 待清洗 + "洗完直接借"按钮，防止下一个人借到脏衣服
+   *
+   * DateTime 字段清空时传 null，不能用空字符串
    */
   async returnItem(recordId, needWash) {
     const fields = {
       状态: needWash ? "待清洗" : "在库",
-      借用人: "",
-      借出时间: "",
-      预计归还: "",
+      借用人: null,
+      借出时间: null,
+      预计归还: null,
       清洗状态: needWash ? "待清洗" : "干净",
     };
     return this._request(
