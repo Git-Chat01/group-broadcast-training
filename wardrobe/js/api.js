@@ -153,6 +153,31 @@ const API = {
   },
 
   /**
+   * 查询某人当前借了哪些衣服 — 单品页「我的借还」用
+   * 按「借用人」字段精确匹配
+   */
+  async getBorrowedBy(borrowerName) {
+    const data = await this._request(
+      "POST",
+      `/open-apis/bitable/v1/apps/${BASE_TOKEN}/tables/${TABLE_ID}/records/search`,
+      {
+        filter: {
+          conjunction: "and",
+          conditions: [
+            {
+              field_name: "借用人",
+              operator: "is",
+              value: [borrowerName],
+            },
+          ],
+        },
+        page_size: 100,
+      }
+    );
+    return (data.data.items || []).map((r) => this._formatRecord(r));
+  },
+
+  /**
    * 新增衣服 — 管理员用
    */
   async addItem(fields) {

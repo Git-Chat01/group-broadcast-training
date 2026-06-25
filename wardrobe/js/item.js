@@ -81,6 +81,9 @@
 
     // 操作按钮
     renderActions(item);
+
+    // 底部：显示该借用人还有哪些没还
+    renderMyItems();
   }
 
   function renderGallery(images) {
@@ -160,14 +163,26 @@
 
   function renderActions(item) {
     const container = $("#itemActions");
-    let html = "";
+    var html = "";
+
+    // 判断当前扫码人是否就是借用人
+    var savedName = (localStorage.getItem(STORAGE_KEY_BORROWER) || "").trim();
+    var isMyItem = savedName && item.status === "已借出" && item.borrower === savedName;
 
     if (item.status === "在库") {
-      // 在库 → 可以借
       html +=
         '<button class="btn btn-primary btn-lg btn-block" onclick="Item.borrow()">👋 我要借这件</button>';
+    } else if (item.status === "已借出" && isMyItem) {
+      // 自己借的 → 快速归还
+      html +=
+        '<div class="borrower-notice" style="background:#e8f5e9;border:1px solid #b9dfc5;">' +
+        '📤 这是你借的' +
+        (item.borrowTime ? ' · 借出：' + esc(item.borrowTime) : '') +
+        '</div>';
+      html +=
+        '<button class="btn btn-success btn-lg btn-block" onclick="Item.quickReturn()">✅ 已洗好，归还</button>';
     } else if (item.status === "已借出") {
-      // 已借出 → 显示借用人，可以归还
+      // 别人借的 → 标准归还
       html +=
         '<div class="borrower-notice">📤 当前借用人：<strong>' +
         (item.borrower || "未知") +
@@ -179,7 +194,6 @@
     } else if (item.status === "待清洗") {
       html +=
         '<div class="borrower-notice">🧹 这件衣服正在等待清洗</div>';
-      // 清洗完了也可以直接借
       html +=
         '<button class="btn btn-primary btn-block" onclick="Item.borrow()" style="margin-top:8px;">👋 洗完直接借</button>';
     } else if (item.status === "已报修") {
@@ -281,6 +295,56 @@
     );
   }
 
+  // ---- 快速归还（自己借的衣服，已洗好）----
+  function quickReturn() {
+    showModal(
+      "确认归还 — " + currentItem.name,
+      '<p style="text-align:center;font-size:16px;margin:12px 0;">已洗好，确认归还？</p>',
+      async function () {
+        try {
+          // 直接归还，状态→在库，无需标记清洗
+          await API.returnItem(currentItem.recordId, false);
+          closeModal();
+          showToast("已归还！");
+          setTimeout(function () { init(); }, 800);
+        } catch (err) {
+          console.error("归还失败:", err);
+          showToast("操作失败：" + (err.message || "未知错误"));
+          return false;
+        }
+      }
+    );
+  }
+
+  // ---- 我的借还记录 ----
+  function renderMyItems() {
+    var savedName = (localStorage.getItem(STORAGE_KEY_BORROWER) || "").trim();
+    if (!savedName) return;
+
+    API.getBorrowedBy(savedName).then(function (myItems) {
+      // 排除当前正在看的这件
+      var others = myItems.filter(function (i) { return i.id !== currentItem.id; });
+      if (others.length === 0) return;
+
+      var html = '<div class="my-items-section">' +
+        '<div class="my-items-title">📋 你还有 <strong>' + others.length + '</strong> 件没还：</div>';
+
+      others.forEach(function (i) {
+        var displayTime = i.borrowTime ? i.borrowTime : '';
+        html +=
+          '<a href="?id=' + encodeURIComponent(i.id) + '" class="my-item-link">' +
+          '🔴 ' + esc(i.id) + ' ' + esc(i.name) +
+          (displayTime ? ' <span class="my-item-time">' + esc(displayTime) + '</span>' : '') +
+          '</a>';
+      });
+
+      html += '</div>';
+      $("#itemActions").insertAdjacentHTML("beforeend", html);
+    }).catch(function () {
+      // 静默失败，不影响主流程
+    });
+  }
+
   // ---- 弹窗 ----
   function showModal(title, body, onConfirm) {
     const sheet = $("#modalSheet");
@@ -343,11 +407,12 @@
 
   // ---- 暴露到全局 ----
   window.Item = {
-    init,
-    borrow,
-    returnItem,
-    markWash,
-    closeModal,
+    init: init,
+    borrow: borrow,
+    returnItem: returnItem,
+    quickReturn: quickReturn,
+    markWash: markWash,
+    closeModal: closeModal,
   };
 
   // 页面加载
