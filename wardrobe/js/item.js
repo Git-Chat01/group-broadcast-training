@@ -187,14 +187,6 @@
         '<div class="borrower-notice" style="color:var(--danger);">⚠️ 这件衣服已报修，暂不可用</div>';
     }
 
-    // 购买链接
-    if (item.link) {
-      html +=
-        '<a href="' +
-        item.link +
-        '" target="_blank" class="btn btn-outline btn-block" style="margin-top:8px;">🛒 查看购买链接</a>';
-    }
-
     container.innerHTML = html;
   }
 
