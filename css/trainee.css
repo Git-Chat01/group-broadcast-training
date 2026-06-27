@@ -692,7 +692,7 @@
     background: #fff;
     border-bottom: 1px solid rgba(0,0,0,0.06);
     position: sticky;
-    top: 0;
+    top: 48px;  /* 给 Tab 导航留空间，避免被遮挡 */
     z-index: 5;
 }
 .script-detail-back {
@@ -836,7 +836,7 @@
     border-color: var(--primary);
 }
 .script-example-nav button:disabled {
-    opacity: 0.2;
+    opacity: 0.35;  /* 从 0.2 提升，确保白色背景下仍然可见 */
 }
 .script-example-dots {
     display: flex;

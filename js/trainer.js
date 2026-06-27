@@ -785,9 +785,9 @@ const Trainer = {
                             <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
                                 <span><strong>${Trainer.escHtml(n)}</strong> — ${count} 条话术</span>
                                 <div style="display:flex;gap:6px;">
-                                    <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:none;font-size:12px;" onclick="Modal.hide();Trainer.setTraineePassword('${Trainer.escJs(n)}')">修改密码</button>
-                                    ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${Trainer.escJs(n)}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
-                                    <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTrainee('${Trainer.escJs(n)}')">删除账号</button>
+                                    <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:none;" onclick="Modal.hide();Trainer.setTraineePassword('${Trainer.escJs(n)}')">修改密码</button>
+                                    ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${Trainer.escJs(n)}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
+                                    <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;" onclick="Modal.hide();Trainer.deleteTrainee('${Trainer.escJs(n)}')">删除账号</button>
                                 </div>
                             </div>`;
                     }).join("")}

@@ -105,7 +105,6 @@ body {
     padding: 6px 12px;
     transition: color 0.2s;
 }
-.btn-trainer-toggle:hover { color: var(--text-secondary); }
 .trainer-entry-form {
     margin-top: 12px;
     display: flex;
@@ -202,7 +201,6 @@ body {
     position: relative;
     transition: color 0.2s;
 }
-.tab-btn:hover { color: var(--primary); }
 .tab-btn.active { color: var(--primary); }
 .tab-btn.active::after {
     content: "";
@@ -272,13 +270,9 @@ body {
 }
 .btn-primary { background: var(--primary); color: #FFF; }
 .btn-success { background: var(--success); color: #FFF; }
-.btn-success:hover { background: #2DB84D; }
 .btn-danger { background: var(--danger); color: #FFF; }
-.btn-danger:hover { background: #E0352B; }
 .btn-outline { background: #FFF; color: var(--primary); border: 2px solid var(--primary); }
-.btn-outline:hover { background: var(--primary); color: #FFF; }
 .btn-ghost { background: none; color: var(--text-secondary); }
-.btn-ghost:hover { background: var(--bg); }
 .btn-sm { padding: 6px 14px; font-size: 13px; }
 .btn-block { width: 100%; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -317,7 +311,6 @@ body {
     font-size: 24px; cursor: pointer;
     color: var(--text-muted); line-height: 1;
 }
-.modal-close:hover { color: var(--danger); }
 .modal-body { padding: 24px; overflow-y: auto; flex: 1; line-height: 1.8; }
 .modal-body img { max-width: 100%; border-radius: var(--radius-sm); margin: 8px 0; }
 
