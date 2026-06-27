@@ -160,7 +160,7 @@ const App = {
         // 培训师入口展开/收起
         document.getElementById("btnToggleTrainer").addEventListener("click", () => {
             const form = document.getElementById("trainerEntryForm");
-            const isHidden = form.style.display === "none";
+            const isHidden = form.style.display !== "flex";
             form.style.display = isHidden ? "flex" : "none";
             document.getElementById("btnToggleTrainer").textContent = isHidden ? "培训师管理 ▲" : "培训师管理";
         });
@@ -327,6 +327,8 @@ const App = {
     },
 
     logout() {
+        // 停止 GitHub 轮询定时器，防止登出后继续请求
+        DB.stopPolling();
         Auth.logout();
         // 清除认知题内存作答状态（防止下一位登录者看到残留数据）
         if (typeof Cognition !== "undefined") Cognition.answered = {};
@@ -339,11 +341,11 @@ const App = {
     // ===== 新人端 Tab 切换 =====
     bindTraineeTabs() {
         const nav = document.querySelector("#view-trainee .tab-nav");
-        if (!nav) return;
-        nav.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                this.switchTraineeTab(btn.dataset.tab);
-            });
+        if (!nav || nav._delegated) return; // 防止重复绑定
+        nav._delegated = true;
+        nav.addEventListener("click", (e) => {
+            const btn = e.target.closest(".tab-btn");
+            if (btn) this.switchTraineeTab(btn.dataset.tab);
         });
     },
 
@@ -367,11 +369,11 @@ const App = {
     // ===== 培训师端 Tab 切换 =====
     bindTrainerTabs() {
         const nav = document.querySelector("#view-trainer .tab-nav");
-        if (!nav) return;
-        nav.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                this.switchTrainerTab(btn.dataset.tab);
-            });
+        if (!nav || nav._delegated) return; // 防止重复绑定
+        nav._delegated = true;
+        nav.addEventListener("click", (e) => {
+            const btn = e.target.closest(".tab-btn");
+            if (btn) this.switchTrainerTab(btn.dataset.tab);
         });
     },
 

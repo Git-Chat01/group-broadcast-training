@@ -282,7 +282,7 @@ const Trainee = {
             const pairedImages = (q.images && q.images.length > 0 && q.images.length === (q.options || []).length);
             let imgsHtml = "";
             if (q.images && q.images.length > 0 && !pairedImages) {
-                imgsHtml = `<div class="question-images">${q.images.map(img => `<img src="${img}" class="question-img" onclick="Trainee.zoomImage(event, '${img}')">`).join("")}</div>`;
+                imgsHtml = `<div class="question-images">${q.images.map(img => `<img src="${img}" class="question-img" onclick="Trainee.zoomImage(event, '${this.escJs(img)}')">`).join("")}</div>`;
             }
 
             // 作答区
@@ -302,9 +302,9 @@ const Trainee = {
                         const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
                         return `
                             <div class="img-opt-card ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
-                                <img src="${q.images[oi]}" class="img-opt-img" onclick="Trainee.zoomImage(event, '${q.images[oi]}')">
+                                <img src="${q.images[oi]}" class="img-opt-img" onclick="Trainee.zoomImage(event, '${this.escJs(q.images[oi])}')">
                                 <div class="img-opt-label">
-                                    <span class="${cls}"></span><span>${opt}</span>
+                                    <span class="${cls}"></span><span>${this.escapeHtml(opt)}</span>
                                 </div>
                             </div>`;
                     }).join("")}</div>`;
@@ -314,7 +314,7 @@ const Trainee = {
                         const cls = q.type === "multiple" ? "option-checkbox" : "option-radio";
                         return `
                             <li class="option-item ${sel ? 'selected' : ''}" data-qid="${q.id}" data-oidx="${oi}" data-qtype="${q.type}">
-                                <span class="${cls}"></span><span>${opt}</span>
+                                <span class="${cls}"></span><span>${this.escapeHtml(opt)}</span>
                             </li>`;
                     }).join("")}</ul>`;
                 }
@@ -323,7 +323,7 @@ const Trainee = {
             return `
                 <div class="question-card ${isAnswered ? 'answered' : ''}" id="qc-${q.id}">
                     <div class="question-number">第 ${idx + 1} 题 <span class="question-type-tag ${tc}">${tl}</span>${q.type === 'multiple' ? '<span class="multi-hint">（多选）</span>' : ''}</div>
-                    <div class="question-text">${q.question}</div>
+                    <div class="question-text">${this.escapeHtml(q.question)}</div>
                     ${imgsHtml}
                     ${answerHtml}
                 </div>`;
@@ -353,6 +353,8 @@ const Trainee = {
 
     // 委托到 storage.js 中的统一 escapeHtml 函数
     escapeHtml(str) { return escapeHtml(str); },
+    /** 转义 JS 字符串字面量中的特殊字符（用于 onclick 属性） */
+    escJs(str) { if (!str) return ""; return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, ""); },
 
     /**
      * 图片缩放 — 用全屏遮罩替代 position:fixed 切换，避免页面抖动
@@ -478,12 +480,12 @@ const Trainee = {
                     <h3 style="margin-bottom:12px;">答题详情</h3>
                     ${details.map((d, i) => `
                         <div class="result-item ${d.isCorrect ? 'correct-item' : 'wrong-item'}">
-                            <div class="result-question">${d.isCorrect ? '✓' : '✗'} 第${i+1}题：${d.question}</div>
+                            <div class="result-question">${d.isCorrect ? '✓' : '✗'} 第${i+1}题：${this.escapeHtml(d.question)}</div>
                             <div class="result-answer">
                                 你的答案：<strong>${this.fmtAns(d.userAnswer, d.options, d.type)}</strong>
                                 ${d.isCorrect ? '' : `| 正确答案：<strong>${this.fmtAns(d.correctAnswer, d.options, d.type)}</strong>`}
                             </div>
-                            ${!d.isCorrect && d.explanation ? `<div class="result-explanation">解析：${d.explanation}</div>` : ''}
+                            ${!d.isCorrect && d.explanation ? `<div class="result-explanation">解析：${this.escapeHtml(d.explanation)}</div>` : ''}
                         </div>`).join("")}
                 </div>
                 <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;">
@@ -632,7 +634,7 @@ const Trainee = {
                         <thead><tr><th>试卷</th><th>成绩</th><th>答对</th><th>时间</th></tr></thead>
                         <tbody>${history.map(r => {
                             const sc = r.score >= PASS_THRESHOLD ? 'style="color:#34C759;"' : 'style="color:#FF3B30;"';
-                            return `<tr><td>${r.examTitle}</td><td ${sc}><strong>${r.score}分</strong></td><td>${r.correctCount}/${r.total}</td><td>${r.date}</td></tr>`;
+                            return `<tr><td>${this.escapeHtml(r.examTitle)}</td><td ${sc}><strong>${r.score}分</strong></td><td>${r.correctCount}/${r.total}</td><td>${r.date}</td></tr>`;
                         }).join("")}</tbody>
                     </table>`}
 

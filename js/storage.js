@@ -258,6 +258,14 @@ const DB = {
     }, 30000);
   },
 
+  /** 停止定期拉取（登出时调用，防止定时器在用户切换后继续运行） */
+  _stopGitHubPolling() {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+  },
+
   // ===== 初始化 =====
 
   /**
@@ -923,7 +931,7 @@ const DB = {
     const trainees = this.getTrainees();
     if (!trainees[name] || !trainees[name].scripts) return;
     const sc = trainees[name].scripts[templateId];
-    if (!sc) return;
+    if (!sc || !versionNum || versionNum <= 0) return; // 无版本或版本异常 → 无目标可批注
     const ver = sc.versions.find((v) => v.version === versionNum);
     if (ver) {
       ver.feedback = {
@@ -1000,6 +1008,11 @@ const DB = {
       delete trainees[name].passwordHash;
       this.saveTrainees(trainees);
     }
+  },
+
+  /** 公开接口：停止轮询（由 App.logout 调用） */
+  stopPolling() {
+    this._stopGitHubPolling();
   },
 
   /** 重置全部数据 */

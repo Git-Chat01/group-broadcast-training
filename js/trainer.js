@@ -307,6 +307,12 @@ const Trainer = {
             </div>
         `);
 
+        // 重置文件输入（允许重复选择同一文件时触发 change 事件）
+        setTimeout(() => {
+            const fi = document.getElementById("fImportFile");
+            if (fi) fi.value = "";
+        }, 100);
+
         let parsedResult = null;
 
         document.getElementById("fImportFile").addEventListener("change", async function() {
@@ -431,8 +437,8 @@ const Trainer = {
                                 </div>
                                 <div class="pending-review-list">
                                     ${pendingList.map(p => `
-                                        <div class="pending-review-item" onclick="Trainer.openScriptFeedback('${p.name}', '${p.templateId}')">
-                                            <span class="pending-review-name">🎤 ${p.name}</span>
+                                        <div class="pending-review-item" onclick="Trainer.openScriptFeedback('${Trainer.escJs(p.name)}', '${Trainer.escJs(p.templateId)}')">
+                                            <span class="pending-review-name">🎤 ${Trainer.escHtml(p.name)}</span>
                                             <span class="pending-review-scene">${p.scene}</span>
                                             <span class="pending-review-cat" style="color:var(--text-muted);font-size:12px;">${p.category}</span>
                                             <span class="pending-review-arrow">→</span>
@@ -472,8 +478,8 @@ const Trainer = {
                                     <span style="font-size:12px;color:${hasPwd ? 'var(--success)' : 'var(--warning)'};margin-left:8px;">${hasPwd ? '🔒 已设密码' : '⚠️ 未设密码'}</span>
                                 </div>
                                 <div style="display:flex;gap:6px;">
-                                    <button class="btn btn-outline btn-sm" onclick="Trainer.setTraineePassword('${name}')">修改密码</button>
-                                    <button class="btn btn-danger btn-sm" onclick="Trainer.deleteTrainee('${name}')">删除</button>
+                                    <button class="btn btn-outline btn-sm" onclick="Trainer.setTraineePassword('${Trainer.escJs(name)}')">修改密码</button>
+                                    <button class="btn btn-danger btn-sm" onclick="Trainer.deleteTrainee('${Trainer.escJs(name)}')">删除</button>
                                 </div>
                             </div>
                             <div class="trainee-stats-grid">
@@ -482,10 +488,10 @@ const Trainer = {
                                 <div><span style="font-size:20px;font-weight:700;color:var(--success);">${clMastered}/${checklist.length}</span><br><span style="font-size:12px;color:var(--text-muted);">能力掌握</span></div>
                             </div>
                             <div style="display:flex;align-items:center;justify-content:space-between;">
-                                <div class="trainer-script-stats" onclick="Trainer.viewTraineeScripts('${name}')" style="margin-top:0;">
+                                <div class="trainer-script-stats" onclick="Trainer.viewTraineeScripts('${Trainer.escJs(name)}')" style="margin-top:0;">
                                     话术进度：${scriptWritten}/${templates.length} 已写${scriptPending > 0 ? ' · ' + scriptPending + ' 个待批注' : ''}
                                 </div>
-                                ${Object.keys(scripts).length > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;padding:4px 10px;" onclick="event.stopPropagation();Trainer.deleteTraineeScripts('${name}')">清除话术</button>` : ''}
+                                ${Object.keys(scripts).length > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;padding:4px 10px;" onclick="event.stopPropagation();Trainer.deleteTraineeScripts('${Trainer.escJs(name)}')">清除话术</button>` : ''}
                             </div>
                             ${history.length > 0 ? `
                                 <table class="data-table" style="margin-top:12px;">
@@ -567,7 +573,7 @@ const Trainer = {
                             const icons = { unwritten: "○", draft: "◐", submitted: "⚠", reviewed: "✓" };
                             const iconColors = { unwritten: "var(--danger)", draft: "var(--warning)", submitted: "#FF9500", reviewed: "var(--success)" };
                             return `
-                                <div class="script-item" onclick="Trainer.openScriptFeedback('${name}', '${t.id}')">
+                                <div class="script-item" onclick="Trainer.openScriptFeedback('${Trainer.escJs(name)}', '${t.id}')">
                                     <span class="script-item-icon" style="color:${iconColors[st]};">${icons[st]}</span>
                                     <span class="script-item-text">${t.scene}</span>
                                     ${st === "submitted" ? '<span class="script-item-badge feedback">待批注</span>' : ''}
@@ -621,7 +627,7 @@ const Trainer = {
         container.innerHTML = `
             <div class="script-detail">
                 <div class="script-detail-header">
-                    <button class="script-detail-back" onclick="Trainer.viewTraineeScripts('${name}')">←</button>
+                    <button class="script-detail-back" onclick="Trainer.viewTraineeScripts('${Trainer.escJs(name)}')">←</button>
                     <span class="script-detail-title">${template.scene} — ${name}</span>
                 </div>
 
@@ -642,7 +648,7 @@ const Trainer = {
                 <div class="script-section">
                     <div class="script-section-label">📝 ${currentFeedback ? '修改批注' : '添加批注'}</div>
                     <textarea class="script-trainer-feedback-input" id="trainerFeedbackInput" placeholder="给出具体的修改建议...">${currentFeedback ? Trainer.escHtml(currentFeedback.text) : ''}</textarea>
-                    <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="Trainer.submitFeedback('${name}', '${templateId}', ${activeV})">
+                    <button class="btn btn-primary" style="margin-top:10px;width:100%;" onclick="Trainer.submitFeedback('${Trainer.escJs(name)}', '${templateId}', ${activeV})">
                         ${currentFeedback ? '更新批注' : '提交批注'}
                     </button>
                 </div>
@@ -777,11 +783,11 @@ const Trainer = {
                         const count = Object.keys(s).length;
                         return `
                             <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
-                                <span><strong>${n}</strong> — ${count} 条话术</span>
+                                <span><strong>${Trainer.escHtml(n)}</strong> — ${count} 条话术</span>
                                 <div style="display:flex;gap:6px;">
-                                    <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:none;font-size:12px;" onclick="Modal.hide();Trainer.setTraineePassword('${n}')">修改密码</button>
-                                    ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${n}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
-                                    <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTrainee('${n}')">删除账号</button>
+                                    <button class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:none;font-size:12px;" onclick="Modal.hide();Trainer.setTraineePassword('${Trainer.escJs(n)}')">修改密码</button>
+                                    ${count > 0 ? `<button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTraineeScripts('${Trainer.escJs(n)}')">清除话术</button>` : '<span style="font-size:12px;color:var(--text-muted);">无话术</span>'}
+                                    <button class="btn btn-sm" style="background:#FFF0F0;color:#FF3B30;border:none;font-size:12px;" onclick="Modal.hide();Trainer.deleteTrainee('${Trainer.escJs(n)}')">删除账号</button>
                                 </div>
                             </div>`;
                     }).join("")}
@@ -795,5 +801,7 @@ const Trainer = {
 
     // ===== 工具方法（委托到 storage.js 统一 escapeHtml） =====
     escAttr(str) { return escapeHtml(str); },
-    escHtml(str)  { return escapeHtml(str); }
+    escHtml(str)  { return escapeHtml(str); },
+    /** 转义 JS 字符串字面量中的特殊字符（用于 onclick 属性），防止单引号/反斜杠破坏语法 */
+    escJs(str) { if (!str) return ""; return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, ""); }
 };

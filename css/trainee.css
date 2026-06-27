@@ -45,7 +45,6 @@
     cursor: pointer; object-fit: contain;
     transition: transform 0.2s;
 }
-.question-img:hover { transform: scale(1.02); }
 
 /* -- 图片遮罩缩放（替代 position:fixed 切换，避免抖动） -- */
 .img-zoom-overlay {
@@ -80,7 +79,6 @@
     transition: border-color 0.2s, box-shadow 0.2s;
     background: var(--card);
 }
-.img-opt-card:hover { box-shadow: var(--shadow-sm); }
 .img-opt-card.selected {
     border-color: var(--primary);
     box-shadow: 0 0 0 1px var(--primary);
@@ -111,7 +109,6 @@
     border-radius: var(--radius-sm);
     cursor: pointer; transition: all 0.15s;
 }
-.option-item:hover { border-color: var(--primary-light); background: #F8FAFF; }
 .option-item.selected { border-color: var(--primary); background: var(--primary-light); }
 .option-item.correct { border-color: var(--success); background: var(--success-light); }
 .option-item.wrong { border-color: var(--danger); background: var(--danger-light); }
@@ -233,7 +230,6 @@
     position: relative;
     transition: box-shadow 0.2s;
 }
-.cog-card:hover { box-shadow: var(--shadow); }
 
 /* -- 序号标记 -- */
 .cog-card-marker {
@@ -328,10 +324,6 @@
     color: var(--text);
     min-height: 44px;
 }
-.cog-option:hover {
-    border-color: var(--primary);
-    background: var(--primary-light);
-}
 .cog-option:active {
     transform: scale(0.98);
 }
@@ -355,11 +347,6 @@
     justify-content: center;
     transition: all 0.2s;
 }
-.cog-option:hover .cog-option-letter {
-    background: var(--primary);
-    color: #FFF;
-}
-
 /* -- 选项判定态 -- */
 .cog-option-correct {
     border-color: var(--success) !important;
@@ -709,8 +696,8 @@
     z-index: 5;
 }
 .script-detail-back {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: none;
     background: #F2F2F7;
@@ -953,7 +940,7 @@
     flex: 0 1 auto;
     min-width: 64px;
     padding: 0 14px;
-    min-height: 42px;
+    min-height: 44px;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
@@ -1036,10 +1023,6 @@
     margin-top: 6px;
     cursor: pointer;
 }
-.trainer-script-stats:hover {
-    color: var(--primary);
-    text-decoration: underline;
-}
 .script-trainer-feedback-input {
     width: 100%;
     min-height: 80px;
@@ -1080,7 +1063,6 @@
     transition: background 0.15s;
     min-height: 44px;  /* 手机端触摸目标 */
 }
-.pending-review-item:hover,
 .pending-review-item:active {
     background: #FFF3E0;
 }
@@ -1145,4 +1127,16 @@
     border-color: var(--primary);
     color: var(--primary);
     min-height: 44px;
+}
+
+/* ========== 仅限鼠标设备的 hover 效果（触摸设备不触发，避免粘滞） ========== */
+@media (hover: hover) {
+    .question-img:hover { transform: scale(1.02); }
+    .img-opt-card:hover { box-shadow: var(--shadow-sm); }
+    .option-item:hover { border-color: var(--primary-light); background: #F8FAFF; }
+    .cog-card:hover { box-shadow: var(--shadow); }
+    .cog-option:hover { border-color: var(--primary); background: var(--primary-light); }
+    .cog-option:hover .cog-option-letter { background: var(--primary); color: #fff; }
+    .trainer-script-stats:hover { color: var(--primary); text-decoration: underline; }
+    .pending-review-item:hover { background: #FFF3E0; }
 }
