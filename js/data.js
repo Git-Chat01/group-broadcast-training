@@ -4,7 +4,7 @@
    ============================================ */
 
 /** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据 */
-const DATA_VERSION = 50;
+const DATA_VERSION = 51;
 /** 考试合格分数线 */
 const PASS_THRESHOLD = 60;
 
