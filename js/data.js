@@ -9,7 +9,8 @@ const DATA_VERSION = 56;
 const PASS_THRESHOLD = 60;
 
 const Defaults = {
-  adminPassword: "xsx2001..",
+  // 管理密码默认值 — SHA-256 哈希（盐: cide_salt_2026），非明文
+  adminPassword: "d2a91fccac7573a0eb21da14de7c910717ced451c2334d56f41ef6948a83a4e0",
 
   modules: [], // 旧版 PPT 式模块已废弃，由能力清单 + 考试体系取代
 

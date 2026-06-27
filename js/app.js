@@ -45,18 +45,22 @@ const App = {
         this.showView("login");
     },
 
-    /** 动态加载 JSZip 和 XLSX */
+    /** 动态加载 JSZip 和 XLSX（含 SRI 完整性校验） */
     loadLibs() {
         // JSZip（用于 docx 解析）
         if (typeof JSZip === "undefined") {
             const s1 = document.createElement("script");
             s1.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+            s1.integrity = "sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG";
+            s1.crossOrigin = "anonymous";
             document.head.appendChild(s1);
         }
         // SheetJS（用于 xlsx 解析）
         if (typeof XLSX === "undefined") {
             const s2 = document.createElement("script");
             s2.src = "https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js";
+            s2.integrity = "sha384-QCIdq2UMVEoSRhR3ZWZwdz2/pivLowr+eokFMdYyukq7qI26VYRxFa4Nl6FKetmL";
+            s2.crossOrigin = "anonymous";
             document.head.appendChild(s2);
         }
     },
@@ -173,10 +177,10 @@ const App = {
             });
         });
 
-        // 培训师登录
-        document.getElementById("btnTrainerLogin").addEventListener("click", () => {
+        // 培训师登录（异步：SHA-256 哈希比对）
+        document.getElementById("btnTrainerLogin").addEventListener("click", async () => {
             const pwd = document.getElementById("inputAdminPassword").value;
-            const result = Auth.loginAsTrainer(pwd);
+            const result = await Auth.loginAsTrainer(pwd);
             if (!result.ok) {
                 const errEl = document.getElementById("loginError");
                 errEl.textContent = result.error;

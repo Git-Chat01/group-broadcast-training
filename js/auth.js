@@ -85,9 +85,26 @@ const Auth = {
         return { ok: true };
     },
 
-    /** 培训师登录 */
-    loginAsTrainer(password) {
-        if (password === DB.getAdminPassword()) {
+    /** 培训师登录（异步：SHA-256 哈希比对，与新人密码同等安全标准）
+     *  向后兼容：若 localStorage 中仍为明文密码，自动迁移为哈希存储 */
+    async loginAsTrainer(password) {
+        const stored = DB.getAdminPassword();
+        // 向后兼容：检测明文密码（非 64 位 hex 哈希），自动迁移
+        if (stored && !/^[a-f0-9]{64}$/.test(stored)) {
+            // 明文比对
+            if (password === stored) {
+                // 匹配成功 → 立即迁移为哈希存储
+                const newHash = await this.hashPassword(password);
+                DB.setAdminPassword(newHash);
+                this.role = "trainer";
+                this.traineeName = "";
+                return { ok: true };
+            }
+            return { ok: false, error: "密码错误" };
+        }
+        // 正常哈希比对
+        const inputHash = await this.hashPassword(password);
+        if (inputHash === stored) {
             this.role = "trainer";
             this.traineeName = "";
             return { ok: true };

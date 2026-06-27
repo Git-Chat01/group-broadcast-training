@@ -70,7 +70,7 @@ const Trainer = {
             </div>
         `;
 
-        document.getElementById("btnChangePassword").addEventListener("click", () => {
+        document.getElementById("btnChangePassword").addEventListener("click", async () => {
             const msgEl = document.getElementById("passwordMsg");
             const showMsg = (text, ok) => {
                 msgEl.textContent = text;
@@ -83,11 +83,15 @@ const Trainer = {
             const confirmPwd = document.getElementById("inputConfirmPassword").value.trim();
 
             if (!oldPwd) { showMsg("请输入旧密码", false); return; }
-            if (oldPwd !== DB.getAdminPassword()) { showMsg("旧密码错误", false); return; }
+            // SHA-256 哈希比对旧密码（不存明文）
+            const oldHash = await Auth.hashPassword(oldPwd);
+            if (oldHash !== DB.getAdminPassword()) { showMsg("旧密码错误", false); return; }
             if (!newPwd) { showMsg("请输入新密码", false); return; }
             if (newPwd !== confirmPwd) { showMsg("两次输入的新密码不一致", false); return; }
 
-            DB.setAdminPassword(newPwd);
+            // 存储新密码的 SHA-256 哈希值
+            const newHash = await Auth.hashPassword(newPwd);
+            DB.setAdminPassword(newHash);
             showMsg("密码已更新！", true);
             document.getElementById("inputOldPassword").value = "";
             document.getElementById("inputNewPassword").value = "";
