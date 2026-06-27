@@ -120,48 +120,63 @@ const Cognition = {
             <div class="cog-card" id="cog-card-${card.id}">
                 <div class="cog-card-marker">${index + 1}</div>
                 <h3 class="cog-card-title">${card.title}</h3>
-                <div class="cog-card-body">${card.content}</div>
+                <div class="cog-card-body">${stripScripts(card.content)}</div>
                 ${scenarioHTML}
             </div>
         `;
     },
 
-    /** 检查场景题答案，显示反馈 */
+    /** 检查场景题答案，显示反馈
+     *  答对 → 记录、持久化、禁用按钮（不再允许修改）
+     *  答错 → 显示反馈和正确答案，但不记录不持久化，保持按钮可用，允许重试 */
     checkAnswer(cardId, selectedIndex) {
         const cards = DB.getCognition();
         const card = cards.find(c => c.id === cardId);
         if (!card || !card.scenario) return;
 
-        // 已作答则不允许修改（避免反复试答案）
-        if (this.answered[cardId]) return;
+        // 已答对 → 不允许再次修改
+        const prev = this.answered[cardId];
+        if (prev !== undefined && prev === card.scenario.answer) return;
 
         const correct = card.scenario.answer === selectedIndex;
-        this.answered[cardId] = selectedIndex;
-        // 持久化保存
-        this._saveAnswers();
-
-        // 禁用所有选项按钮
         const optionsEl = document.getElementById("cog-options-" + cardId);
-        if (optionsEl) {
-            optionsEl.querySelectorAll(".cog-option").forEach(btn => {
-                btn.disabled = true;
-                // 标记正确选项（绿色）和用户选择（如选错则标红）
-                const idx = parseInt(btn.dataset.optionIndex);
-                if (idx === card.scenario.answer) {
-                    btn.classList.add("cog-option-correct");
-                } else if (idx === selectedIndex && !correct) {
-                    btn.classList.add("cog-option-wrong");
-                }
-            });
+        const feedbackEl = document.getElementById("cog-feedback-" + cardId);
+
+        if (correct) {
+            // 答对：记录 + 持久化 + 禁用按钮
+            this.answered[cardId] = selectedIndex;
+            this._saveAnswers();
+
+            if (optionsEl) {
+                optionsEl.querySelectorAll(".cog-option").forEach(btn => {
+                    btn.disabled = true;
+                    const idx = parseInt(btn.dataset.optionIndex);
+                    if (idx === card.scenario.answer) {
+                        btn.classList.add("cog-option-correct");
+                    }
+                });
+            }
+        } else {
+            // 答错：高亮正确选项（绿色）+ 错误选项（红色），但不禁用按钮，不清除之前的错误标记
+            if (optionsEl) {
+                optionsEl.querySelectorAll(".cog-option").forEach(btn => {
+                    const idx = parseInt(btn.dataset.optionIndex);
+                    // 清除上一次答错遗留的样式
+                    btn.classList.remove("cog-option-wrong");
+                    if (idx === card.scenario.answer) {
+                        btn.classList.add("cog-option-correct");
+                    } else if (idx === selectedIndex) {
+                        btn.classList.add("cog-option-wrong");
+                    }
+                });
+            }
         }
 
         // 显示反馈
-        const feedbackEl = document.getElementById("cog-feedback-" + cardId);
         if (feedbackEl) {
-            const isCorrect = correct;
-            feedbackEl.className = "cog-feedback " + (isCorrect ? "cog-feedback-ok" : "cog-feedback-err");
+            feedbackEl.className = "cog-feedback " + (correct ? "cog-feedback-ok" : "cog-feedback-err");
             feedbackEl.innerHTML = `
-                <div class="cog-feedback-icon">${isCorrect ? "✅ 正确！" : "❌ 不对"}</div>
+                <div class="cog-feedback-icon">${correct ? "✅ 正确！" : "❌ 不对，再试试其他选项～"}</div>
                 <div class="cog-feedback-text">${card.scenario.explanation}</div>
             `;
             feedbackEl.style.display = "block";

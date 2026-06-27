@@ -17,6 +17,35 @@ function escapeHtml(str) {
 }
 
 /**
+ * HTML 安全净化 — 移除 script 标签和危险属性（on* / javascript:）
+ * 用于渲染培训师提交的 HTML 内容（模块正文、认知卡片等）前做防御性过滤。
+ * 策略：DOM 解析 → 移除危险节点/属性 → 输出安全 HTML
+ */
+function stripScripts(html) {
+  if (!html) return "";
+  const doc = document.createElement("div");
+  doc.innerHTML = html;
+  // 移除所有 <script> 标签
+  doc.querySelectorAll("script").forEach(el => el.remove());
+  // 移除所有元素上的内联事件属性和 javascript: 链接
+  doc.querySelectorAll("*").forEach(el => {
+    const attrs = [...el.attributes];
+    attrs.forEach(attr => {
+      const name = attr.name.toLowerCase();
+      // 移除所有 on* 事件属性
+      if (/^on\w+/.test(name)) {
+        el.removeAttribute(name);
+      }
+      // 移除 javascript: 协议的 href/src
+      if ((name === "href" || name === "src") && /^\s*javascript:/i.test(attr.value)) {
+        el.removeAttribute(name);
+      }
+    });
+  });
+  return doc.innerHTML;
+}
+
+/**
  * 手风琴折叠工具 — 清单和话术分类共用
  * 由 Trainee.toggleCategory 委托，Trainer 直接调用，消除跨模块耦合
  */
@@ -49,6 +78,9 @@ const DB = {
   _syncPending: false,
   /** 轮询定时器 */
   _pollTimer: null,
+  /** 排名缓存 + 时间戳（5 秒内不重复计算，避免 O(n×m) 开销） */
+  _rankingsCache: null,
+  _rankingsCacheTime: 0,
 
   /** Base64 编码（正确处理 Unicode 中文） */
   _toBase64(str) {
@@ -299,8 +331,10 @@ const DB = {
         existing.push(d);
         changed = true;
       } else {
+        // 仅在 updateFn 真的修改了数据时才标记变更（避免无变化的版本升级触发全量保存）
+        const before = JSON.stringify(old);
         updateFn(old, d);
-        changed = true;
+        if (JSON.stringify(old) !== before) changed = true;
       }
     });
     return changed;
@@ -537,9 +571,13 @@ const DB = {
     }));
   },
 
-  /** 计算所有新人的综合排名
+  /** 计算所有新人的综合排名（5 秒内缓存有效，避免渲染和快照保存时重复 O(n×m) 遍历）
    *  话术质量权重：基础1.0 + 批注×0.2 + 版本≥2×0.05 × (版本数-1, 上限0.15) */
   getRankings() {
+    // 5 秒内返回缓存结果
+    if (this._rankingsCache && Date.now() - this._rankingsCacheTime < 5000) {
+      return this._rankingsCache;
+    }
     const all = this.getTraineesAll();
     const templates = this.getScriptTemplates();
     const checklist = this.getChecklist();
@@ -547,7 +585,7 @@ const DB = {
     const totalExamIds = Object.keys(exams).length;
     const prevSnapshot = this._getLatestRankingSnapshot();
 
-    return all
+    const result = all
       .map((t) => {
         // 话术分 — 质量加权
         const scripts = t.scripts || {};
@@ -641,6 +679,9 @@ const DB = {
         if (a.qualified !== b.qualified) return a.qualified ? -1 : 1;
         return b.total - a.total;
       });
+    this._rankingsCache = result;
+    this._rankingsCacheTime = Date.now();
+    return result;
   },
 
   /** 保存排名快照（用于计算排名变化） */

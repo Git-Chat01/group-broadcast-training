@@ -524,7 +524,9 @@ const Trainer = {
             if (newPwd.trim().length < 6) { alert("密码至少6位，请重新操作。"); return; }
             const hash = await Auth.hashPassword(newPwd.trim());
             DB.setTraineePassword(name, hash);
-            alert(`「${name}」的密码已更新为：${newPwd.trim()}\n\n请告知该新人。`);
+            // 不在弹窗中展示明文密码（防投屏/录屏泄露），提示培训师通过私密渠道告知
+            const masked = newPwd.trim().substring(0, 2) + "***";
+            alert(`「${name}」的密码已更新（${masked}）。\n\n⚠️ 请通过私密渠道（微信/钉钉私聊）告知该新人，不要在群聊或投屏时展示密码。`);
         }
         this.renderMonitorPanel();
     },

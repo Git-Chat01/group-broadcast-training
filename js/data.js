@@ -3,8 +3,18 @@
    9套试卷 · 能力清单（9类32项）
    ============================================ */
 
-/** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据。
- *  注意：需与 index.html 中 CSS/JS 的 ?v= 缓存破坏参数保持同步。 */
+/**
+ * 数据版本号 — 修改 Defaults（题库/清单/话术模板/认知卡片）后递增。
+ * storage.js 在 init() 中比对版本号，触发智能合并（旧数据不丢失）。
+ *
+ * ⚠️ 部署新版本时，以下三处必须同步更新：
+ *   DATA_VERSION    (本行)   → 触发 localStorage 数据合并
+ *   index.html ?v=  (9个JS + 3个CSS) → 破坏浏览器缓存
+ *   sw.js CACHE_NAME ("cide-vXX")     → 触发 SW 重新缓存
+ *
+ *   简单规则：随便选一个数字（如 62），三处全部改成它。
+ *   DATA_VERSION  ≠ ?v=  时不会报错，但可能新题库被旧 CSS/JS 缓存拖垮样式。
+ */
 const DATA_VERSION = 58;
 /** 考试合格分数线 */
 const PASS_THRESHOLD = 60;

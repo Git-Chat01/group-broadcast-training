@@ -38,6 +38,14 @@ const Trainee = {
             </div>
         ` : '';
 
+        if (checklist.length === 0) {
+            container.innerHTML = `
+                <div class="card" style="text-align:center;">
+                    <p class="empty-state">暂无能力清单数据</p>
+                    <p style="color:var(--text-muted);">请联系培训师添加软硬件自检项目</p>
+                </div>`;
+            return;
+        }
         container.innerHTML = checklistCardHTML;
     },
 
@@ -1108,6 +1116,15 @@ const Trainee = {
             // 把"新建"选项的值重置，下次选新建时又可以用
             sel.querySelector('option[value="0"]').value = "0";
         } else {
+            // 检查当前版本是否有批注：如果有，storage 层会自动创建新版本（而非原地覆盖）
+            const sc = DB.getScripts(Auth.traineeName)[this.currentScriptId];
+            const activeVer = sc && sc.activeVersion > 0
+                ? sc.versions.find(v => v.version === sc.activeVersion)
+                : null;
+            if (activeVer && activeVer.feedback) {
+                // 有批注 → 提示学员"保存草稿将创建新版本"，让行为透明
+                if (!confirm("当前版本已有培训师批注，保存草稿将自动创建新版本（原版本和批注保留不变）。\n\n确定保存吗？")) return;
+            }
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
         }
 
@@ -1159,6 +1176,7 @@ const Trainee = {
                 submitBtn.disabled = true;
             }
         } else {
+            // 非新建版本 → 三步走：保存草稿（可能创建新版本如果有批注）、标记为已提交、标记为已完成
             DB.saveScriptDraft(Auth.traineeName, this.currentScriptId, content);
             DB.submitScript(Auth.traineeName, this.currentScriptId);
             DB.markScriptCompleted(Auth.traineeName, this.currentScriptId);
@@ -1206,8 +1224,22 @@ const Trainee = {
     switchScriptVersion(templateId, versionNum) {
         const vn = parseInt(versionNum);
         if (vn === 0) {
-            // 新建版本：清空输入框 + 重置提交按钮
-            document.getElementById("scriptContentInput").value = "";
+            // 新建版本：检查是否有未保存内容，避免静默丢失
+            const inputEl = document.getElementById("scriptContentInput");
+            const currentContent = inputEl ? inputEl.value : "";
+            if (currentContent.trim()) {
+                // 对比当前激活版本的内容，判断是否真的"未保存"
+                const sc = DB.getScripts(Auth.traineeName)[templateId];
+                const activeVer = sc && sc.activeVersion > 0
+                    ? sc.versions.find(v => v.version === sc.activeVersion)
+                    : null;
+                const savedContent = activeVer ? activeVer.content : "";
+                if (currentContent !== savedContent) {
+                    if (!confirm("当前有未保存的编辑内容，切换到新建版本将丢失这些内容。\n\n确定要切换吗？")) return;
+                }
+            }
+            // 清空输入框 + 重置提交按钮
+            inputEl.value = "";
             document.getElementById("scriptVersionSelect").value = "0";
             const submitBtn = document.querySelector(".btn-script-submit");
             if (submitBtn) {

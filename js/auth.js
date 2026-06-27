@@ -40,11 +40,28 @@ const Auth = {
     },
 
     /** 密码强度评估
+     *  极弱：常见弱密码（字典匹配）→ 5%
      *  低：单类型（纯数字连续/重复=25%，其他单类型=33%）
      *  中：双类型组合 = 66%
      *  高：三类型组合 = 100% */
     evaluatePasswordStrength(password) {
         if (!password) return { level: "low", label: "低", pct: 0 };
+
+        // 常见弱密码字典（不区分大小写）
+        const weakPasswords = [
+            "123456", "12345678", "123456789", "1234567890",
+            "111111", "000000", "666666", "888888",
+            "password", "admin123", "admin", "123123",
+            "qwerty", "abc123", "iloveyou", "monkey",
+            "1234567", "letmein", "trustno1", "dragon",
+            "baseball", "sunshine", "master", "welcome",
+            "login", "starwars", "access", "passw0rd",
+            "zxcvbnm", "asdfgh", "1qaz2wsx", "qazwsx",
+        ];
+        const lower = password.toLowerCase();
+        if (weakPasswords.includes(lower)) {
+            return { level: "low", label: "极弱（常见密码）", pct: 5 };
+        }
 
         const hasDigit = /[0-9]/.test(password);
         const hasLetter = /[a-zA-Z]/.test(password);

@@ -4,6 +4,9 @@
    - CSS/JS（带 ?v= 版本号）→ Cache First（URL变更即自动刷新）
    - HTML → Network First（始终获取最新页面结构）
    - 图片/字体 → Cache First（长期不变）
+
+   ⚠️ 部署新版时：CACHE_NAME 必须与 index.html 的 ?v= 保持同步。
+   详见 js/data.js 顶部注释中的三处版本号说明。
    ============================================ */
 
 const CACHE_NAME = "cide-v61";

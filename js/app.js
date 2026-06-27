@@ -101,8 +101,18 @@ const App = {
                 padding:4px 14px;border-radius:4px;font-size:13px;
                 font-weight:600;cursor:pointer;
             ">立即刷新</button>
+            <button id="sw-update-close" style="
+                background:transparent;color:#fff;border:none;
+                font-size:20px;line-height:1;cursor:pointer;
+                padding:0 4px;opacity:0.8;
+            " title="稍后提醒">&times;</button>
         `;
         document.body.prepend(banner);
+
+        // 关闭按钮：隐藏横幅（本次会话不再显示）
+        document.getElementById("sw-update-close").addEventListener("click", () => {
+            banner.style.display = "none";
+        });
 
         document.getElementById("sw-update-btn").addEventListener("click", () => {
             // 通知 SW 跳过等待 → 激活 → 刷新页面
@@ -318,6 +328,8 @@ const App = {
 
     logout() {
         Auth.logout();
+        // 清除认知题内存作答状态（防止下一位登录者看到残留数据）
+        if (typeof Cognition !== "undefined") Cognition.answered = {};
         this._resetLoginUI();
         this.showView("login");
         document.getElementById("inputAdminPassword").value = "";

@@ -171,6 +171,7 @@ Defaults.exams = {
               answer: [0,1,2],
               explanation: "内容创新、话术优化和数据优化是提升流量的三大手段。" },
             { id: 7, type: "multiple", question: "从流量工具角度出发，有哪些提流量的玩法方式？（多选）",
+              // 注意：本题图片与 exam-gjsy（团播工具使用基础）共享目录，删除前请确认无交叉引用
               images: ["images/exam-gjsy/image5.png","images/exam-gjsy/image6.png","images/exam-gjsy/image3.png","images/exam-gjsy/image4.png"],
               options: ["设计飞行嘉宾玩法，丰富直播内容","提升直播内容，冲击团播榜单/团员榜单","开启团员共创，获得更多流量分发","团播账号厂牌设置"],
               answer: [0,1,2,3],
