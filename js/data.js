@@ -3,8 +3,9 @@
    9套试卷 · 能力清单（9类32项）
    ============================================ */
 
-/** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据 */
-const DATA_VERSION = 56;
+/** 数据版本号 — 修改 Defaults 后递增，storage.js 自动合并新旧数据。
+ *  注意：需与 index.html 中 CSS/JS 的 ?v= 缓存破坏参数保持同步。 */
+const DATA_VERSION = 58;
 /** 考试合格分数线 */
 const PASS_THRESHOLD = 60;
 
