@@ -330,15 +330,44 @@ const DB = {
   },
 
   /**
-   * 智能合并试卷：直接覆盖（保留成绩数据在 trainees 中）
+   * 智能合并试卷：逐题按 id 合并，而非整卷替换。
+   * - 新增试卷 → 直接添加
+   * - 已有试卷 → 更新标题 + 逐题合并（新增/更新，保留培训师自定义题目）
+   * - 学员成绩记录存储在 trainees 中，不受试卷合并影响
    */
   _mergeExams(defaultExams) {
     const existing = this.getExams();
     let changed = false;
     Object.keys(defaultExams).forEach((eid) => {
-      if (!existing[eid] || JSON.stringify(existing[eid]) !== JSON.stringify(defaultExams[eid])) {
+      if (!existing[eid]) {
+        // 全新试卷：直接添加
         existing[eid] = defaultExams[eid];
         changed = true;
+      } else {
+        // 已有试卷：更新标题 + 逐题按 id 合并
+        if (existing[eid].title !== defaultExams[eid].title) {
+          existing[eid].title = defaultExams[eid].title;
+          changed = true;
+        }
+        const existingQs = existing[eid].questions || [];
+        const defaultQs = defaultExams[eid].questions || [];
+        // 逐题合并：新增题目 → 添加；已有题目 → 更新题目内容、选项、答案、解析
+        // deleteRemoved = false：不删除培训师可能添加的自定义题目
+        if (this._mergeArrayById(
+          existingQs,
+          defaultQs,
+          (oldQ, newQ) => {
+            oldQ.type = newQ.type;
+            oldQ.question = newQ.question;
+            oldQ.images = newQ.images;
+            oldQ.options = newQ.options;
+            oldQ.answer = newQ.answer;
+            oldQ.explanation = newQ.explanation;
+          },
+          false
+        )) {
+          changed = true;
+        }
       }
     });
     if (changed) this.saveExams(existing);
