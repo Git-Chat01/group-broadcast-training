@@ -41,8 +41,81 @@ const App = {
         // 5. 监听远端数据同步（自动刷新培训师面板）
         this._bindSyncListener();
 
-        // 6. 默认显示登录页
+        // 6. 注册 Service Worker（离线缓存 + 版本更新提示）
+        this._registerSW();
+
+        // 7. 默认显示登录页
         this.showView("login");
+    },
+
+    /** 注册 Service Worker 实现离线缓存和版本更新通知 */
+    _registerSW() {
+        if (!("serviceWorker" in navigator)) return;
+
+        navigator.serviceWorker.register("/sw.js").then((reg) => {
+            console.log("[SW] 已注册:", reg.scope);
+
+            // 监听新版本就绪
+            reg.addEventListener("updatefound", () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener("statechange", () => {
+                    // 新 SW 安装完成，等待激活
+                    if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                        console.log("[SW] 新版本已就绪，刷新页面以激活");
+                        // 显示更新提示横幅
+                        App._showUpdateBanner();
+                    }
+                });
+            });
+        }).catch((err) => {
+            console.warn("[SW] 注册失败:", err);
+        });
+
+        // 页面已由 SW 控制 → 检查是否有待激活的更新
+        if (navigator.serviceWorker.controller) {
+            navigator.serviceWorker.addEventListener("controllerchange", () => {
+                console.log("[SW] 控制器已切换为新版本");
+            });
+        }
+    },
+
+    /** 页面顶部显示「新版本可用」横幅 */
+    _showUpdateBanner() {
+        // 防止重复显示
+        if (document.getElementById("sw-update-banner")) return;
+
+        const banner = document.createElement("div");
+        banner.id = "sw-update-banner";
+        banner.style.cssText = `
+            position:fixed;top:0;left:0;right:0;z-index:10000;
+            background:var(--primary);color:#fff;text-align:center;
+            padding:10px 16px;font-size:14px;display:flex;
+            align-items:center;justify-content:center;gap:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.2);
+        `;
+        banner.innerHTML = `
+            <span>🔄 内容已更新，刷新页面获取最新版本</span>
+            <button id="sw-update-btn" style="
+                background:#fff;color:var(--primary);border:none;
+                padding:4px 14px;border-radius:4px;font-size:13px;
+                font-weight:600;cursor:pointer;
+            ">立即刷新</button>
+        `;
+        document.body.prepend(banner);
+
+        document.getElementById("sw-update-btn").addEventListener("click", () => {
+            // 通知 SW 跳过等待 → 激活 → 刷新页面
+            const worker = navigator.serviceWorker.controller;
+            if (worker) worker.postMessage("skipWaiting");
+            // 同时刷新所有客户端
+            navigator.serviceWorker.getRegistrations().then((regs) => {
+                regs.forEach((reg) => {
+                    if (reg.waiting) reg.waiting.postMessage("skipWaiting");
+                });
+            });
+            window.location.reload();
+        });
     },
 
     /** 动态加载 JSZip 和 XLSX（含 SRI 完整性校验） */

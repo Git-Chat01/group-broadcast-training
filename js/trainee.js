@@ -682,6 +682,11 @@ const Trainee = {
         const btnEl = document.getElementById("btnChangeTraineePwd");
         if (!newPwdEl || !btnEl) return;
 
+        // 移除上一次绑定的监听器（防止重复渲染时累积）
+        if (this._pwdChangeCtrl) this._pwdChangeCtrl.abort();
+        this._pwdChangeCtrl = new AbortController();
+        const { signal } = this._pwdChangeCtrl;
+
         // 新密码输入 → 强度实时更新
         newPwdEl.addEventListener("input", (e) => {
             const pwd = e.target.value;
@@ -697,7 +702,7 @@ const Trainee = {
             } else {
                 wrap.style.display = "none";
             }
-        });
+        }, { signal });
 
         // 修改密码按钮
         btnEl.addEventListener("click", async () => {
@@ -726,7 +731,7 @@ const Trainee = {
             show("密码已更新，即将跳转登录页…", true);
             // 延迟退出，让用户看到成功提示后再跳转
             setTimeout(() => App.logout(), 1500);
-        });
+        }, { signal });
     },
 
     // ==================== 话术练习 ====================

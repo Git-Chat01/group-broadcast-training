@@ -1,0 +1,30 @@
+/* ============================================
+   团播主持新人培训系统 — 样式表 — 培训师后台
+   简洁清新风格 · CSS 变量统一管理
+   ============================================ */
+
+/* ========== 培训师端 ========== */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.form-input, .form-textarea, .form-select {
+    width: 100%; padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-family: inherit;
+    transition: border-color 0.2s;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none; border-color: var(--primary);
+}
+.form-textarea { min-height: 200px; resize: vertical; font-family: monospace; }
+.form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.inline-flex { display: flex; gap: 8px; align-items: center; }
+
+/* ========== 导入预览 ========== */
+.import-preview { max-height: 400px; overflow-y: auto; }
+.import-preview-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.import-preview-table th, .import-preview-table td {
+    padding: 6px 10px; border: 1px solid var(--border); text-align: left;
+}
+.import-preview-table th { background: #FAFAFA; }
+
