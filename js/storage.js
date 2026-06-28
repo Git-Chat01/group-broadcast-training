@@ -82,54 +82,30 @@ const DB = {
   _rankingsCache: null,
   _rankingsCacheTime: 0,
 
-  /** Base64 编码（正确处理 Unicode 中文） */
-  _toBase64(str) {
-    const bytes = new TextEncoder().encode(str);
-    let binary = "";
-    bytes.forEach((b) => (binary += String.fromCharCode(b)));
-    return btoa(binary);
-  },
-
-  /** Base64 解码（正确处理 Unicode 中文） */
-  _fromBase64(b64) {
-    const binary = atob(b64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return new TextDecoder().decode(bytes);
-  },
-
-  /** GitHub 是否已配置（token 已保存到 localStorage） */
+  /** 同步是否可用（Worker 代理模式 — Token 在服务端，前端无需持有） */
   _githubReady() {
-    if (typeof GITHUB_CONFIG === "undefined" || !GITHUB_CONFIG) return false;
-    const token = GITHUB_CONFIG.token; // getter 从 localStorage 读取
+    // Worker 模式：始终可用，鉴权由 Worker 的 GITHUB_TOKEN 环境变量处理
+    if (typeof GITHUB_CONFIG !== "undefined" && GITHUB_CONFIG && GITHUB_CONFIG.syncWorker) return true;
+    // 向后兼容：如果还配了旧版 token，也认为可用
+    const token = GITHUB_CONFIG && GITHUB_CONFIG.token;
     return !!(token && token.startsWith("ghp_"));
   },
 
-  /** 从 GitHub 拉取 db.json 并写入 localStorage */
+  /** 从 Worker 拉取 db.json 并写入 localStorage（Worker 代理 GitHub API） */
   async _pullFromGitHub() {
     if (!this._githubReady()) return false;
     try {
-      const url =
-        "https://api.github.com/repos/" +
-        GITHUB_CONFIG.owner +
-        "/" +
-        GITHUB_CONFIG.repo +
-        "/contents/db.json?ref=" +
-        (GITHUB_CONFIG.branch || "master");
-      const resp = await fetch(url, {
-        headers: {
-          Authorization: "Bearer " + GITHUB_CONFIG.token,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-      if (resp.status === 404) return false; // db.json 还不存在
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      const file = await resp.json();
-      this._lastRemoteSHA = file.sha;
-      const raw = this._fromBase64(file.content);
-      const remote = JSON.parse(raw);
+      const resp = await fetch(GITHUB_CONFIG.syncWorker + "/api/sync");
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        // 404 或 db.json 不存在 → 首次使用，正常跳过
+        if (resp.status === 404 || err.exists === false) return false;
+        throw new Error("HTTP " + resp.status + (err.message ? ": " + err.message : ""));
+      }
+      const result = await resp.json();
+      if (!result.content) return false;
+      this._lastRemoteSHA = result.sha;
+      const remote = result.content; // Worker 已解码 base64，直接就是 JSON 对象
 
       // 将远端数据写入 localStorage，记录是否有变化
       const keys = [
@@ -159,12 +135,12 @@ const DB = {
       }
       return true;
     } catch (err) {
-      console.warn("[GitHub] 拉取失败：", err);
+      console.warn("[Sync] 拉取失败：", err);
       return false;
     }
   },
 
-  /** 推送 localStorage 全部数据到 GitHub db.json */
+  /** 推送 localStorage 全部数据到 Worker → Worker 写入 GitHub db.json */
   async _pushToGitHub() {
     if (!this._githubReady() || this._syncing) return;
     this._syncing = true;
@@ -193,48 +169,35 @@ const DB = {
         }
       }
 
-      const url =
-        "https://api.github.com/repos/" +
-        GITHUB_CONFIG.owner +
-        "/" +
-        GITHUB_CONFIG.repo +
-        "/contents/db.json";
-      const body = {
-        message: "数据同步 " + new Date().toLocaleString("zh-CN"),
-        content: this._toBase64(JSON.stringify(data)),
-        branch: GITHUB_CONFIG.branch || "master",
-      };
+      const body = { content: data };
       // 如果有远端 SHA，带上以更新文件（而非创建）
       if (this._lastRemoteSHA) {
         body.sha = this._lastRemoteSHA;
       }
 
-      const resp = await fetch(url, {
-        method: "PUT",
-        headers: {
-          Authorization: "Bearer " + GITHUB_CONFIG.token,
-          Accept: "application/vnd.github.v3+json",
-          "Content-Type": "application/json",
-        },
+      const resp = await fetch(GITHUB_CONFIG.syncWorker + "/api/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       if (!resp.ok) {
-        if (resp.status === 409) {
+        const err = await resp.json().catch(() => ({}));
+        if (resp.status === 409 || err.conflict) {
           // SHA 冲突：远端有新数据，拉取合并后重试
-          console.log("[GitHub] SHA 冲突，合并远端数据后重试");
+          console.log("[Sync] SHA 冲突，合并远端数据后重试");
           await this._pullFromGitHub();
           this._syncing = false;
           await this._pushToGitHub();
           return;
         }
-        throw new Error("HTTP " + resp.status);
+        throw new Error("HTTP " + resp.status + (err.message ? ": " + err.message : ""));
       }
 
       const result = await resp.json();
-      this._lastRemoteSHA = result.content ? result.content.sha : null;
+      this._lastRemoteSHA = result.sha || null;
     } catch (err) {
-      console.warn("[GitHub] 推送失败：", err);
+      console.warn("[Sync] 推送失败：", err);
     } finally {
       this._syncing = false;
     }

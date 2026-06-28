@@ -14,9 +14,11 @@
  * 6. 在培训师后台「内容管理」页面底部「同步设置」中粘贴并保存
  */
 const GITHUB_CONFIG = {
+    // 同步 Worker 地址 — 所有 GitHub API 调用经此代理，Token 存在 Worker 端不暴露
+    syncWorker: "https://api.aivar.cc",
+
+    // 以下字段供向后兼容，不再直接调 GitHub API
     get token() {
-        // 从 localStorage 读取用户手动设置的 token
-        // 培训师后台 → 同步设置 → 粘贴 GitHub Personal Access Token
         return localStorage.getItem("github_sync_token") || null;
     },
     owner: "Git-Chat01",

@@ -55,17 +55,21 @@ const Trainer = {
                 <p class="form-hint" id="passwordMsg" style="display:none;margin-top:8px;"></p>
             </div>
 
-            <!-- 同步设置（GitHub Token） -->
+            <!-- 同步设置（Worker 代理） -->
             <div class="progress-section">
                 <h3>☁️ 同步设置</h3>
                 <p style="font-size:13px;color:var(--text-secondary);margin-bottom:10px;">
-                    填入 GitHub Personal Access Token 后，新人手机端的数据会自动同步到你的电脑。<br>
-                    <a href="https://github.com/settings/tokens" target="_blank" rel="noopener" style="color:var(--primary);">点此创建 Token</a>（勾选 repo 权限，过期时间选 No expiration）
+                    数据通过 <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px;">api.aivar.cc/api/sync</code> 自动同步。<br>
+                    新人手机端的所有操作会自动推送到云端，你这里实时能看到。
                 </p>
-                <div style="display:flex;gap:8px;max-width:400px;">
-                    <input type="password" class="form-input" id="inputSyncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="flex:1;">
-                    <button class="btn btn-primary btn-sm" id="btnSaveSyncToken">保存</button>
-                </div>
+                <p style="font-size:12px;color:var(--success);margin-bottom:8px;">✅ 同步服务已激活（Worker 代理模式）</p>
+                <details style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+                    <summary style="cursor:pointer;color:var(--text-secondary);">高级：手动覆盖 GitHub Token</summary>
+                    <div style="display:flex;gap:8px;max-width:400px;margin-top:8px;">
+                        <input type="password" class="form-input" id="inputSyncToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="flex:1;">
+                        <button class="btn btn-primary btn-sm" id="btnSaveSyncToken">保存</button>
+                    </div>
+                </details>
                 <p class="form-hint" id="syncTokenMsg" style="margin-top:8px;"></p>
             </div>
         `;
