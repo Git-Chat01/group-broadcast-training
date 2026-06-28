@@ -687,8 +687,8 @@
 .script-detail-header {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    gap: 12px;
+    padding: 8px 12px;
+    gap: 10px;
     background: #fff;
     border-bottom: 1px solid rgba(0,0,0,0.06);
     position: sticky;
@@ -696,12 +696,12 @@
     z-index: 5;
 }
 .script-detail-back {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: none;
     background: #F2F2F7;
-    font-size: 18px;
+    font-size: 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -714,7 +714,7 @@
 }
 .script-detail-title {
     flex: 1;
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -722,14 +722,14 @@
     color: var(--text-primary);
 }
 .script-version-select {
-    font-size: 13px;
-    padding: 5px 10px;
+    font-size: 12px;
+    padding: 4px 6px;
     border-radius: 6px;
     border: 1px solid var(--border);
     background: #fff;
     color: var(--text-primary);
     flex-shrink: 0;
-    max-width: 100px;
+    max-width: 72px;
     font-weight: 500;
 }
 
