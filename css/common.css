@@ -674,6 +674,11 @@ body {
     .form-input, .form-textarea, .form-select { font-size: 16px; }
     .inline-flex { flex-direction: column; align-items: stretch; }
     .inline-flex > .form-select { width: 100%; }
+    /* -- 话术详情页贴紧 Tab 导航 -- */
+    .script-detail {
+        margin: -16px -10px 0;
+    }
+
     /* -- 话术详情页顶部栏移动端极致压缩 -- */
     .script-detail-header {
         padding: 4px 8px;
