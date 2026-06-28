@@ -129,18 +129,30 @@ const DB = {
           }
         }
       }
-      // 新人数据：远端与本地合并（保留本机未推送的旧数据 + 吸纳其他设备的新数据）
+      // 新人数据：远端为权威数据源，本地只补充远端没有且通过乱码检测的新人
       if (remote.trainees !== undefined) {
         let localTrainees = {};
         try {
           localTrainees = JSON.parse(localStorage.getItem("trainees")) || {};
         } catch (e) { /* ignore */ }
-        const merged = { ...remote.trainees, ...localTrainees };
-        // 本地优先：同名新人保留本地版本（包含本机最新进度）
-        // 但远端有而本地没有的新人 → 添加（来自其他设备）
-        for (const name of Object.keys(remote.trainees)) {
-          if (!localTrainees[name]) {
-            merged[name] = remote.trainees[name];
+        // 远端优先（同步修复后远端是干净数据源）
+        const merged = { ...localTrainees, ...remote.trainees };
+        for (const name of Object.keys(localTrainees)) {
+          if (!remote.trainees[name]) {
+            // 乱码检测：乱码特征 → 含 Latin-1 补充字符（U+0080-U+00FF，如 Ã Â © ¢）且不含中文
+            const hasChinese = /[一-鿿]/.test(name);
+            let latin1Extra = 0;
+            for (let i = 0; i < name.length; i++) {
+              const c = name.charCodeAt(i);
+              if (c >= 0x80 && c <= 0xff) latin1Extra++;
+            }
+            const looksGarbled = !hasChinese && latin1Extra >= 2;
+            // 名字过长（>20字符）且无中文 → 明显是垃圾数据
+            const looksLikeJunk = !hasChinese && name.length > 20;
+            if (looksGarbled || looksLikeJunk) {
+              continue; // 跳过乱码/垃圾数据，不合并
+            }
+            merged[name] = localTrainees[name];
           }
         }
         const mergedVal = JSON.stringify(merged);
