@@ -680,8 +680,14 @@
 }
 
 /* --- 场景详情页 --- */
+
+/* 进入话术详情时，消除 main-content 上边距 */
+.main-content.script-flush {
+    margin-top: 0;
+}
+
 .script-detail {
-    margin: 0 -16px 0;  /* 左右抵消 main-content 的 padding，顶部由 JS 处理 marginTop */
+    margin: 0 -16px 0;  /* 左右抵消 main-content 的 padding */
     padding-bottom: 200px;
     background: #F8F8FA;
 }

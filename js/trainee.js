@@ -757,7 +757,7 @@ const Trainee = {
         if (filter) this._scriptFilter = filter;
         // 恢复 main-content 默认上边距（离开话术详情时）
         const mc = document.querySelector(".main-content");
-        if (mc) mc.style.marginTop = "";
+        if (mc) mc.classList.remove("script-flush");
         const container = document.getElementById("trainee-panel-script");
         const templates = DB.getScriptTemplates();
         const scripts = DB.getScripts(Auth.traineeName);
@@ -989,7 +989,7 @@ const Trainee = {
         const container = document.getElementById("trainee-panel-script");
         // 消除 main-content 上边距，让话术详情贴紧 Tab 导航
         const mc = document.querySelector(".main-content");
-        if (mc) mc.style.marginTop = "0";
+        if (mc) mc.classList.add("script-flush");
         container.innerHTML = `
             <div class="script-detail">
                 <div class="script-detail-header">

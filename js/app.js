@@ -52,7 +52,7 @@ const App = {
     _registerSW() {
         if (!("serviceWorker" in navigator)) return;
 
-        navigator.serviceWorker.register("/sw.js?v=76").then((reg) => {
+        navigator.serviceWorker.register("/sw.js?v=77").then((reg) => {
             console.log("[SW] 已注册:", reg.scope);
 
             // 监听新版本就绪
@@ -358,6 +358,11 @@ const App = {
         document.querySelectorAll("#view-trainee .tab-panel").forEach(p => {
             p.classList.toggle("active", p.id === "trainee-panel-" + tabName);
         });
+        // 离开话术 Tab 时，恢复 main-content 默认上边距
+        if (tabName !== "script") {
+            const mc = document.querySelector(".main-content");
+            if (mc) mc.classList.remove("script-flush");
+        }
         // 渲染对应内容
         if (tabName === "cognition") Cognition.renderPanel();
         if (tabName === "study") Trainee.renderStudyPanel();
