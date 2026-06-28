@@ -1035,6 +1035,7 @@ const Trainee = {
                 </button>
                 <textarea id="scriptContentInput" placeholder="在这里写你自己的话术版本...">${this.escapeHtml(currentContent)}</textarea>
                 <div class="script-input-actions">
+                    <button class="btn-script-collapse" onclick="Trainee.toggleInputBar()">收起 ▲</button>
                     <button class="btn-script-draft" onclick="Trainee.saveScriptDraft()">保存草稿</button>
                     <button class="btn-script-read" onclick="Trainee.openReadMode()">试读</button>
                     <button class="btn-script-submit" onclick="Trainee.submitScript()">提交</button>

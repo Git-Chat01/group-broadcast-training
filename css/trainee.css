@@ -1029,6 +1029,23 @@
     line-height: 1;
 }
 
+/* 展开态收起按钮 */
+.btn-script-collapse {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    min-height: 44px;
+    padding: 0 10px;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-script-collapse:active {
+    color: var(--text-secondary);
+}
+
 /* --- 试读模式 --- */
 .read-mode-overlay {
     position: fixed;
