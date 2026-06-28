@@ -9,23 +9,23 @@
    详见 js/data.js 顶部注释中的三处版本号说明。
    ============================================ */
 
-const CACHE_NAME = "cide-v73";
+const CACHE_NAME = "cide-v74";
 const CACHE_ASSETS = [
   "/",
   "/index.html",
-  "/css/common.css?v=73",
-  "/css/trainee.css?v=73",
-  "/css/trainer.css?v=73",
-  "/js/github-config.js?v=73",
-  "/js/storage.js?v=73",
-  "/js/data.js?v=73",
-  "/js/exams_data.js?v=73",
-  "/js/auth.js?v=73",
-  "/js/cognition.js?v=73",
-  "/js/trainee.js?v=73",
-  "/js/import.js?v=73",
-  "/js/trainer.js?v=73",
-  "/js/app.js?v=73",
+  "/css/common.css?v=74",
+  "/css/trainee.css?v=74",
+  "/css/trainer.css?v=74",
+  "/js/github-config.js?v=74",
+  "/js/storage.js?v=74",
+  "/js/data.js?v=74",
+  "/js/exams_data.js?v=74",
+  "/js/auth.js?v=74",
+  "/js/cognition.js?v=74",
+  "/js/trainee.js?v=74",
+  "/js/import.js?v=74",
+  "/js/trainer.js?v=74",
+  "/js/app.js?v=74",
 ];
 
 // ===== Install：预缓存核心资源 =====

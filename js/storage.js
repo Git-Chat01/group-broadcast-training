@@ -129,30 +129,69 @@ const DB = {
           }
         }
       }
-      // 新人数据：远端为权威数据源，本地只补充远端没有且通过乱码检测的新人
+      // 新人数据：远端为权威数据源，两端都做乱码修复后再合并
       if (remote.trainees !== undefined) {
         let localTrainees = {};
         try {
           localTrainees = JSON.parse(localStorage.getItem("trainees")) || {};
         } catch (e) { /* ignore */ }
-        // 远端优先（同步修复后远端是干净数据源）
-        const merged = { ...localTrainees, ...remote.trainees };
-        for (const name of Object.keys(localTrainees)) {
-          if (!remote.trainees[name]) {
-            // 乱码检测：乱码特征 → 含 Latin-1 补充字符（U+0080-U+00FF，如 Ã Â © ¢）且不含中文
-            const hasChinese = /[一-鿿]/.test(name);
-            let latin1Extra = 0;
-            for (let i = 0; i < name.length; i++) {
-              const c = name.charCodeAt(i);
-              if (c >= 0x80 && c <= 0xff) latin1Extra++;
-            }
-            const looksGarbled = !hasChinese && latin1Extra >= 2;
-            // 名字过长（>20字符）且无中文 → 明显是垃圾数据
-            const looksLikeJunk = !hasChinese && name.length > 20;
-            if (looksGarbled || looksLikeJunk) {
-              continue; // 跳过乱码/垃圾数据，不合并
-            }
-            merged[name] = localTrainees[name];
+
+        // —— 浏览器端安全的乱码检测 + 修复（TextDecoder API） ——
+        const fixName = function (name) {
+          if (!name || /[一-鿿]/.test(name)) return name; // 已含中文，不乱码
+          try {
+            const bytes = new Uint8Array(name.length);
+            for (let i = 0; i < name.length; i++) bytes[i] = name.charCodeAt(i) & 0xff;
+            const fixed = new TextDecoder("utf-8").decode(bytes);
+            if (/[一-鿿]/.test(fixed) && fixed !== name) return fixed;
+          } catch (e) { /* ignore */ }
+          return name;
+        };
+        const looksBad = function (name) {
+          if (/[一-鿿]/.test(name)) return false; // 有中文，不乱码
+          let latin1 = 0;
+          for (let i = 0; i < name.length; i++) {
+            const c = name.charCodeAt(i);
+            if (c >= 0x80 && c <= 0xff) latin1++;
+          }
+          return !/[一-鿿]/.test(name) && (latin1 >= 2 || name.length > 20);
+        };
+
+        // —— 清洗远端 trainees ——
+        const cleanRemote = {};
+        let remoteFixed = 0;
+        for (const [name, data] of Object.entries(remote.trainees)) {
+          if (looksBad(name)) {
+            const fixed = fixName(name);
+            if (!looksBad(fixed)) { cleanRemote[fixed] = data; remoteFixed++; }
+            // 修不好的乱码 → 丢弃
+          } else {
+            cleanRemote[name] = data;
+          }
+        }
+        if (remoteFixed > 0) console.log("[Sync] 修复远端乱码新人:", remoteFixed, "个");
+
+        // —— 清洗本地 trainees ——
+        const cleanLocal = {};
+        let localFixed = 0, localDropped = 0;
+        for (const [name, data] of Object.entries(localTrainees)) {
+          if (looksBad(name)) {
+            const fixed = fixName(name);
+            if (!looksBad(fixed)) { cleanLocal[fixed] = data; localFixed++; }
+            else { localDropped++; }
+          } else {
+            cleanLocal[name] = data;
+          }
+        }
+        if (localFixed > 0 || localDropped > 0) {
+          console.log("[Sync] 修复本地乱码新人:", localFixed, "个, 丢弃:", localDropped, "个");
+        }
+
+        // —— 合并：远端优先，本地补充远端没有的 ——
+        const merged = { ...cleanLocal, ...cleanRemote };
+        for (const name of Object.keys(cleanLocal)) {
+          if (!cleanRemote[name]) {
+            merged[name] = cleanLocal[name];
           }
         }
         const mergedVal = JSON.stringify(merged);
