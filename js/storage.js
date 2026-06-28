@@ -107,8 +107,8 @@ const DB = {
       this._lastRemoteSHA = result.sha;
       const remote = result.content; // Worker 已解码 base64，直接就是 JSON 对象
 
-      // 将远端数据写入 localStorage，记录是否有变化
-      const keys = [
+      // 将远端数据写入 localStorage（trainees 合并，其余覆盖）
+      const staticKeys = [
         "adminPassword",
         "dataVersion",
         "modules",
@@ -116,10 +116,10 @@ const DB = {
         "checklist",
         "scriptTemplates",
         "cognition",
-        "trainees",
       ];
       let changed = false;
-      for (const key of keys) {
+      // 静态数据：远端直接覆盖本地（培训师更新内容后所有人同步）
+      for (const key of staticKeys) {
         if (remote[key] !== undefined) {
           const newVal =
             typeof remote[key] === "string" ? remote[key] : JSON.stringify(remote[key]);
@@ -127,6 +127,26 @@ const DB = {
             localStorage.setItem(key, newVal);
             changed = true;
           }
+        }
+      }
+      // 新人数据：远端与本地合并（保留本机未推送的旧数据 + 吸纳其他设备的新数据）
+      if (remote.trainees !== undefined) {
+        let localTrainees = {};
+        try {
+          localTrainees = JSON.parse(localStorage.getItem("trainees")) || {};
+        } catch (e) { /* ignore */ }
+        const merged = { ...remote.trainees, ...localTrainees };
+        // 本地优先：同名新人保留本地版本（包含本机最新进度）
+        // 但远端有而本地没有的新人 → 添加（来自其他设备）
+        for (const name of Object.keys(remote.trainees)) {
+          if (!localTrainees[name]) {
+            merged[name] = remote.trainees[name];
+          }
+        }
+        const mergedVal = JSON.stringify(merged);
+        if (localStorage.getItem("trainees") !== mergedVal) {
+          localStorage.setItem("trainees", mergedVal);
+          changed = true;
         }
       }
       // 数据有变化时通知 UI 自动刷新
