@@ -976,6 +976,59 @@
     background: rgba(0,122,255,0.06);
 }
 
+/* --- 可折叠输入栏（手机端节省空间） --- */
+.script-input-bar {
+    transition: padding 0.25s ease;
+}
+
+/* 收起态：只显示展开按钮 */
+.script-input-bar.collapsed {
+    padding: 6px 16px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    cursor: pointer;
+}
+.script-input-bar.collapsed textarea,
+.script-input-bar.collapsed .script-input-actions {
+    display: none;
+}
+.script-input-bar.collapsed .script-input-expand-btn {
+    display: flex;
+}
+
+/* 收起态也不显示输入栏原来的柔性间距 */
+.script-input-bar.collapsed textarea + .script-input-actions {
+    margin-top: 0;
+}
+
+/* 展开按钮 — 默认隐藏，收起态才显示 */
+.script-input-expand-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 44px;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    background: #F9F9FB;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+.script-input-expand-btn:active {
+    background: #F0F0F5;
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.script-input-expand-btn .expand-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
 /* --- 试读模式 --- */
 .read-mode-overlay {
     position: fixed;

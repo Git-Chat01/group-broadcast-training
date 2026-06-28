@@ -1029,7 +1029,10 @@ const Trainee = {
                 ${reviseBtnHTML}
             </div>
 
-            <div class="script-input-bar">
+            <div class="script-input-bar" id="scriptInputBar">
+                <button class="script-input-expand-btn" id="scriptExpandBtn" onclick="Trainee.toggleInputBar()">
+                    <span class="expand-icon">✏️</span> 写话术
+                </button>
                 <textarea id="scriptContentInput" placeholder="在这里写你自己的话术版本...">${this.escapeHtml(currentContent)}</textarea>
                 <div class="script-input-actions">
                     <button class="btn-script-draft" onclick="Trainee.saveScriptDraft()">保存草稿</button>
@@ -1048,12 +1051,93 @@ const Trainee = {
         } else {
             this._viewedMaxExample = 0;
         }
+
+        // 初始化输入栏状态：有内容则展开，空则收起
+        this._initInputBarState(currentContent);
     },
 
     /** 示范话术当前索引 */
     _exampleIndex: 0,
     /** 已查看的示范话术最大索引（记录用户是否看完了所有示范） */
     _viewedMaxExample: 0,
+
+    /** 输入栏是否展开（手机端折叠控制） */
+    _inputBarExpanded: false,
+
+    /** 初始化输入栏折叠状态：有内容则展开，空则收起 */
+    _initInputBarState(currentContent) {
+        const bar = document.getElementById("scriptInputBar");
+        if (!bar) return;
+        const hasContent = currentContent && currentContent.trim().length > 0;
+        if (hasContent) {
+            // 有已有内容 → 展开
+            this._inputBarExpanded = true;
+            bar.classList.remove("collapsed");
+            const textarea = document.getElementById("scriptContentInput");
+            if (textarea) textarea.style.display = "";
+            const actions = bar.querySelector(".script-input-actions");
+            if (actions) actions.style.display = "";
+        } else {
+            // 空内容 → 收起，只显示「写话术」按钮
+            this._inputBarExpanded = false;
+            bar.classList.add("collapsed");
+            const textarea = document.getElementById("scriptContentInput");
+            if (textarea) textarea.style.display = "none";
+            const actions = bar.querySelector(".script-input-actions");
+            if (actions) actions.style.display = "none";
+        }
+    },
+
+    /** 切换输入栏展开/收起 */
+    toggleInputBar() {
+        const bar = document.getElementById("scriptInputBar");
+        if (!bar) return;
+        const textarea = document.getElementById("scriptContentInput");
+        const actions = bar.querySelector(".script-input-actions");
+
+        if (this._inputBarExpanded) {
+            // 收起：隐藏 textarea + 按钮，blur 释放键盘
+            this._inputBarExpanded = false;
+            bar.classList.add("collapsed");
+            if (textarea) { textarea.style.display = "none"; textarea.blur(); }
+            if (actions) actions.style.display = "none";
+            window.scrollTo(0, 0);
+        } else {
+            // 展开：显示 textarea + 按钮，自动 focus
+            this._inputBarExpanded = true;
+            bar.classList.remove("collapsed");
+            if (textarea) {
+                textarea.style.display = "";
+                setTimeout(function() { textarea.focus(); }, 100);
+            }
+            if (actions) actions.style.display = "";
+            bar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    },
+
+    /** 确保输入栏处于展开状态（静默，不 scroll） */
+    _ensureInputExpanded() {
+        if (this._inputBarExpanded) return;
+        this._inputBarExpanded = true;
+        const bar = document.getElementById("scriptInputBar");
+        if (bar) bar.classList.remove("collapsed");
+        const textarea = document.getElementById("scriptContentInput");
+        if (textarea) textarea.style.display = "";
+        const actions = document.querySelector(".script-input-actions");
+        if (actions) actions.style.display = "";
+    },
+
+    /** 收起输入栏 */
+    collapseInputBar() {
+        if (!this._inputBarExpanded) return;
+        this._inputBarExpanded = false;
+        const bar = document.getElementById("scriptInputBar");
+        if (bar) bar.classList.add("collapsed");
+        const textarea = document.getElementById("scriptContentInput");
+        if (textarea) { textarea.style.display = "none"; textarea.blur(); }
+        const actions = document.querySelector(".script-input-actions");
+        if (actions) actions.style.display = "none";
+    },
 
     /** 检查是否已看完所有示范话术 */
     _hasViewedAllExamples() {
@@ -1196,6 +1280,8 @@ const Trainee = {
         const inputEl = document.getElementById("scriptContentInput");
         if (inputEl) inputEl.blur();
         window.scrollTo(0, 0);
+        // 提交成功后自动收起输入栏，让用户看到「✓ 已提交」反馈
+        this.collapseInputBar();
     },
 
     /** 基于批注创建新版本 — 切到新建、预填当前内容、聚焦输入框 */
@@ -1205,10 +1291,6 @@ const Trainee = {
         if (sel) sel.value = "0";
         // 预填当前版本内容（方便在原有基础上改）
         const contentEl = document.getElementById("scriptContentInput");
-        if (contentEl) {
-            contentEl.focus();
-            contentEl.setSelectionRange(contentEl.value.length, contentEl.value.length);
-        }
         // 重置提交按钮（之前可能是「✓ 已提交」禁用状态）
         const submitBtn = document.querySelector(".btn-script-submit");
         if (submitBtn) {
@@ -1217,9 +1299,15 @@ const Trainee = {
             submitBtn.style.color = "";
             submitBtn.disabled = false;
         }
-        // 滚动到输入区
+        // 确保输入栏展开，滚动到输入区
+        this._ensureInputExpanded();
         const inputBar = document.querySelector(".script-input-bar");
         if (inputBar) inputBar.scrollIntoView({ behavior: "smooth", block: "center" });
+        // 聚焦文本区
+        if (contentEl) {
+            contentEl.focus();
+            contentEl.setSelectionRange(contentEl.value.length, contentEl.value.length);
+        }
     },
 
     /** 切换版本 */
@@ -1240,7 +1328,7 @@ const Trainee = {
                     if (!confirm("当前有未保存的编辑内容，切换到新建版本将丢失这些内容。\n\n确定要切换吗？")) return;
                 }
             }
-            // 清空输入框 + 重置提交按钮
+            // 清空输入框 + 重置提交按钮 + 收起输入栏
             inputEl.value = "";
             document.getElementById("scriptVersionSelect").value = "0";
             const submitBtn = document.querySelector(".btn-script-submit");
@@ -1250,6 +1338,7 @@ const Trainee = {
                 submitBtn.style.color = "";
                 submitBtn.disabled = false;
             }
+            this.collapseInputBar();
         } else {
             DB.setActiveScriptVersion(Auth.traineeName, templateId, vn);
             this.openScriptScene(templateId);
