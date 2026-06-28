@@ -990,6 +990,11 @@ const Trainee = {
         // 消除 main-content 上边距，让话术详情贴紧 Tab 导航
         const mc = document.querySelector(".main-content");
         if (mc) mc.classList.add("script-flush");
+        // 动态测量 Tab 导航高度，让 sticky header 精确对齐
+        const tabNav = document.querySelector("#view-trainee .tab-nav");
+        if (tabNav) {
+          document.documentElement.style.setProperty("--tab-nav-h", tabNav.offsetHeight + "px");
+        }
         container.innerHTML = `
             <div class="script-detail">
                 <div class="script-detail-header">
@@ -1042,7 +1047,6 @@ const Trainee = {
                 <textarea id="scriptContentInput" placeholder="在这里写你自己的话术版本...">${this.escapeHtml(currentContent)}</textarea>
                 <div class="script-input-actions">
                     <button class="btn-script-collapse" onclick="Trainee.toggleInputBar()">收起 ▲</button>
-                    <button class="btn-script-draft" onclick="Trainee.saveScriptDraft()">保存草稿</button>
                     <button class="btn-script-read" onclick="Trainee.openReadMode()">试读</button>
                     <button class="btn-script-submit" onclick="Trainee.submitScript()">提交</button>
                 </div>

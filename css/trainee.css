@@ -699,7 +699,7 @@
     background: #fff;
     border-bottom: 1px solid rgba(0,0,0,0.06);
     position: sticky;
-    top: 48px;  /* 给 Tab 导航留空间，避免被遮挡 */
+    top: var(--tab-nav-h, 52px);  /* 由 JS 动态测量 Tab 导航高度 */
     z-index: 5;
 }
 .script-detail-back {
