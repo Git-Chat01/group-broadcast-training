@@ -9,23 +9,23 @@
    详见 js/data.js 顶部注释中的三处版本号说明。
    ============================================ */
 
-const CACHE_NAME = "cide-v72";
+const CACHE_NAME = "cide-v73";
 const CACHE_ASSETS = [
   "/",
   "/index.html",
-  "/css/common.css?v=72",
-  "/css/trainee.css?v=72",
-  "/css/trainer.css?v=72",
-  "/js/github-config.js?v=72",
-  "/js/storage.js?v=72",
-  "/js/data.js?v=72",
-  "/js/exams_data.js?v=72",
-  "/js/auth.js?v=72",
-  "/js/cognition.js?v=72",
-  "/js/trainee.js?v=72",
-  "/js/import.js?v=72",
-  "/js/trainer.js?v=72",
-  "/js/app.js?v=72",
+  "/css/common.css?v=73",
+  "/css/trainee.css?v=73",
+  "/css/trainer.css?v=73",
+  "/js/github-config.js?v=73",
+  "/js/storage.js?v=73",
+  "/js/data.js?v=73",
+  "/js/exams_data.js?v=73",
+  "/js/auth.js?v=73",
+  "/js/cognition.js?v=73",
+  "/js/trainee.js?v=73",
+  "/js/import.js?v=73",
+  "/js/trainer.js?v=73",
+  "/js/app.js?v=73",
 ];
 
 // ===== Install：预缓存核心资源 =====
@@ -72,6 +72,12 @@ self.addEventListener("fetch", (event) => {
 
   // 跳过 GitHub API 请求（数据同步不走缓存）
   if (url.hostname === "api.github.com") return;
+
+  // 跳过同步 Worker（数据同步不走缓存）
+  if (url.hostname === "api.aivar.cc") return;
+
+  // SW 自身永远走网络（否则版本更新会死锁）
+  if (url.pathname === "/sw.js") return;
 
   // 策略 1：HTML 文档 → Network First
   if (request.mode === "navigate" || request.destination === "document") {
