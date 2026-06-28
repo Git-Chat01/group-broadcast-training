@@ -681,7 +681,7 @@
 
 /* --- 场景详情页 --- */
 .script-detail {
-    margin: -24px -16px 0;  /* 抵消 main-content 的间距，贴紧 Tab 导航 */
+    margin: 0 -16px 0;  /* 左右抵消 main-content 的 padding，顶部由 JS 处理 marginTop */
     padding-bottom: 200px;
     background: #F8F8FA;
 }
