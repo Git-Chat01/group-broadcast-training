@@ -46,6 +46,123 @@ const SYNC_REPO = "group-broadcast-training";
 const SYNC_BRANCH = "master";
 const SYNC_FILE = "db.json";
 
+// ===== 乱码检测与修复工具（服务端防线） =====
+
+/**
+ * 判断字符串是否看起来像乱码（UTF-8 双重编码导致）
+ * 特征：不含中日韩字符 + 含有大量 Latin-1 补充字符（0x80-0xFF）
+ */
+function looksGarbled(str) {
+  if (!str || typeof str !== "string") return false;
+  // 如果包含 CJK 字符，说明已经是正确的中文，不是乱码
+  if (/[一-鿿]/.test(str)) return false;
+  let latin1Count = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c >= 0x80 && c <= 0xff) latin1Count++;
+  }
+  // 至少 2 个 Latin-1 补充字符，或者字符串异常长（可能是编码膨胀）
+  return latin1Count >= 2 || (latin1Count >= 1 && str.length > 20);
+}
+
+/**
+ * 尝试修复乱码字符串
+ * 原理：将乱码字符串按 Latin-1 解释为字节，再用 UTF-8 解码
+ * 如果修复失败则返回 null
+ */
+function tryFixGarbled(str) {
+  try {
+    // 将每个字符的 charCode（如果是 Latin-1 范围）当作字节
+    const bytes = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) {
+      bytes[i] = str.charCodeAt(i) & 0xff;
+    }
+    const fixed = new TextDecoder("utf-8").decode(bytes);
+    // 修复后必须包含 CJK 字符才算成功
+    if (/[一-鿿]/.test(fixed) && fixed !== str) {
+      return fixed;
+    }
+  } catch (e) {
+    // 解码失败，返回 null
+  }
+  return null;
+}
+
+/**
+ * 递归清理对象中所有的乱码字符串值
+ * 遍历所有属性，对每个字符串值调用 looksGarbled → tryFixGarbled
+ * 注意：只处理值，不处理键名（键名由上层 cleanTrainees 处理）
+ */
+function deepCleanValues(obj, log, path) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === "string") {
+    if (looksGarbled(obj)) {
+      const fixed = tryFixGarbled(obj);
+      if (fixed) {
+        const preview = obj.length > 30 ? obj.slice(0, 30) + "..." : obj;
+        log.push(`[修复] ${path}: "${preview}" → 已修复`);
+        return fixed;
+      }
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    const result = [];
+    for (let i = 0; i < obj.length; i++) {
+      result.push(deepCleanValues(obj[i], log, path + "[" + i + "]"));
+    }
+    return result;
+  }
+  if (typeof obj === "object") {
+    const cleaned = {};
+    for (const [k, v] of Object.entries(obj)) {
+      cleaned[k] = deepCleanValues(v, log, path ? path + "." + k : k);
+    }
+    return cleaned;
+  }
+  return obj;
+}
+
+/**
+ * 清理 trainees 对象中的乱码键名和深层乱码值
+ * 这是服务端最后一道防线，阻断任何客户端产生的乱码数据写入 GitHub
+ */
+function cleanTrainees(trainees) {
+  if (!trainees || typeof trainees !== "object") return { cleaned: trainees, log: [] };
+  const cleaned = {};
+  const log = [];
+
+  for (const [name, entryData] of Object.entries(trainees)) {
+    let fixedName = name;
+    let data = entryData;
+
+    // 1. 检测键名是否乱码
+    if (looksGarbled(name)) {
+      const fixed = tryFixGarbled(name);
+      if (fixed) {
+        log.push(`[修复] 键名乱码: "${name}" → "${fixed}"`);
+        fixedName = fixed;
+      } else {
+        log.push(`[丢弃] 键名乱码无法修复: "${name}"`);
+        continue;
+      }
+    }
+
+    // 2. 深度清理 trainee 数据中的所有乱码字符串值
+    data = deepCleanValues(data, log, fixedName);
+
+    // 3. 如果修复后的键名已存在，合并数据
+    if (cleaned[fixedName]) {
+      log.push(`[合并] 键名冲突: "${fixedName}"，保留已有数据`);
+      cleaned[fixedName] = { ...data, ...cleaned[fixedName] };
+    } else {
+      cleaned[fixedName] = data;
+    }
+  }
+
+  return { cleaned, log };
+}
+
 /**
  * 处理 /api/sync 请求
  * GET  — 拉取 GitHub db.json → base64 解码 → 返回 JSON
@@ -119,10 +236,20 @@ async function handleSync(request, env) {
         decoded = new TextDecoder("utf-8").decode(bytes);
       }
 
+      // 3. 解析 JSON 并清理可能残存的乱码数据
+      const content = JSON.parse(decoded);
+      if (content.trainees) {
+        const { cleaned, log } = cleanTrainees(content.trainees);
+        if (log.length > 0) {
+          console.log("[sync] GET trainees 清理记录:", JSON.stringify(log));
+        }
+        content.trainees = cleaned;
+      }
+
       return new Response(
         JSON.stringify({
           sha: file.sha,
-          content: JSON.parse(decoded),
+          content,
         }),
         {
           status: 200,
@@ -162,6 +289,20 @@ async function handleSync(request, env) {
           }
         );
       }
+
+      // ===== 服务端乱码防御：清理 trainees 中的乱码数据 =====
+      let cleanLog = [];
+      if (body.content.trainees) {
+        const { cleaned, log } = cleanTrainees(body.content.trainees);
+        cleanLog = log;
+        if (log.length > 0) {
+          console.log("[sync] POST trainees 清理记录:", JSON.stringify(log));
+        }
+        body.content.trainees = cleaned;
+      }
+
+      // 序列化前删除临时字段（防止 _cleanLog 写入 db.json）
+      delete body.content._cleanLog;
 
       // 将 JSON 内容序列化后 base64 编码
       const jsonStr = JSON.stringify(body.content, null, 2);
@@ -209,6 +350,7 @@ async function handleSync(request, env) {
         JSON.stringify({
           ok: true,
           sha: result.content ? result.content.sha : null,
+          cleanLog: cleanLog.length > 0 ? cleanLog : undefined,
         }),
         {
           status: 200,

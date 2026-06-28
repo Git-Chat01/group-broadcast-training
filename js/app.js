@@ -52,7 +52,7 @@ const App = {
     _registerSW() {
         if (!("serviceWorker" in navigator)) return;
 
-        navigator.serviceWorker.register("/sw.js?v=74").then((reg) => {
+        navigator.serviceWorker.register("/sw.js?v=75").then((reg) => {
             console.log("[SW] 已注册:", reg.scope);
 
             // 监听新版本就绪
