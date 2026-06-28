@@ -301,6 +301,48 @@ async function handleSync(request, env) {
         body.content.trainees = cleaned;
       }
 
+      // ===== 数据保护锁：防止意外清空学员数据 =====
+      // 当 incoming trainees 为空时，先拉取 GitHub 当前数据比对，
+      // 如果远端有学员但 incoming 是空的，拒绝写入，防止 bug 客户端/错误操作清空数据
+      const incomingTraineeCount = Object.keys(body.content.trainees || {}).length;
+      if (incomingTraineeCount === 0) {
+        try {
+          const checkResp = await fetch(apiBase, { headers });
+          if (checkResp.ok) {
+            const currentFile = await checkResp.json();
+            if (currentFile.content) {
+              const raw = atob(currentFile.content.replace(/\s/g, ""));
+              const bytes = new Uint8Array(raw.length);
+              for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i) & 0xff;
+              const current = JSON.parse(new TextDecoder("utf-8").decode(bytes));
+              const currentTraineeCount = Object.keys(current.trainees || {}).length;
+              if (currentTraineeCount > 0) {
+                console.warn("[sync] ⛔ 拦截：尝试将 " + currentTraineeCount + " 名学员数据清空，拒绝写入");
+                return new Response(
+                  JSON.stringify({
+                    error: true,
+                    message: "数据保护：远端有 " + currentTraineeCount + " 名学员数据，拒绝清空。" +
+                             "如果你确实要清除所有学员数据，请先手动删除后再同步。",
+                    protected: true,
+                    currentTraineeCount,
+                  }),
+                  {
+                    status: 409,
+                    headers: {
+                      "Content-Type": "application/json; charset=utf-8",
+                      "Access-Control-Allow-Origin": "*",
+                    },
+                  }
+                );
+              }
+            }
+          }
+        } catch (e) {
+          // 检查失败不影响正常写入流程，仅记录日志
+          console.warn("[sync] 数据保护检查失败，跳过:", e.message);
+        }
+      }
+
       // 序列化前删除临时字段（防止 _cleanLog 写入 db.json）
       delete body.content._cleanLog;
 
