@@ -683,11 +683,13 @@
 
 /* 进入话术详情时，消除 main-content 上边距 */
 .main-content.script-flush {
-    margin-top: 0;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 
 .script-detail {
-    margin: 0 -16px 0;  /* 左右抵消 main-content 的 padding */
+    /* 左右抵消 main-content 的 padding；顶部负 margin 消除 main-content 和 tab-panel 之间的所有间距 */
+    margin: -1px -16px 0;
     padding-bottom: 200px;
     background: #F8F8FA;
 }
