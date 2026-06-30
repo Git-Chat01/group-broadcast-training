@@ -987,51 +987,100 @@
 
 /* --- 可折叠输入栏（手机端节省空间） --- */
 .script-input-bar {
-    transition: padding 0.25s ease;
+    overflow: hidden;
+    max-height: 420px; /* 展开态：把手 ~30px + textarea ≤180px + 操作栏 ~60px + padding */
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.3s ease;
 }
 
-/* 收起态：只显示展开按钮 */
+/* 收起态：只显示展开按钮，bar 自身缩到最小高度 */
 .script-input-bar.collapsed {
+    max-height: 56px;
     padding: 6px 16px;
     padding-bottom: max(6px, env(safe-area-inset-bottom));
     cursor: pointer;
 }
-.script-input-bar.collapsed textarea,
-.script-input-bar.collapsed .script-input-actions {
-    display: none;
+
+/* 收起态 — 隐藏输入区、操作栏、把手 */
+.script-input-bar.collapsed textarea {
+    max-height: 0;
+    min-height: 0;
+    opacity: 0;
+    margin: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    overflow: hidden;
 }
+.script-input-bar.collapsed .script-input-actions {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+    overflow: hidden;
+}
+.script-input-bar.collapsed .script-input-handle {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* 收起态 — 显示展开按钮 */
 .script-input-bar.collapsed .script-input-expand-btn {
     display: flex;
 }
 
-/* 收起态也不显示输入栏原来的柔性间距 */
-.script-input-bar.collapsed textarea + .script-input-actions {
-    margin-top: 0;
+/* --- 顶部收起把手（展开态可见，类似 iOS 抽屉） --- */
+.script-input-handle {
+    display: flex;
+    justify-content: center;
+    padding: 8px 0 6px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+}
+.script-input-handle .handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: #C7C7CC;
 }
 
-/* 展开按钮 — 默认隐藏，收起态才显示 */
+/* --- 输入控件过渡 --- */
+.script-input-bar textarea {
+    transition: max-height 0.25s ease, opacity 0.2s ease,
+                margin 0.25s ease, padding 0.25s ease,
+                border-width 0.25s ease, min-height 0.25s ease;
+}
+.script-input-bar .script-input-actions {
+    transition: max-height 0.25s ease, opacity 0.2s ease,
+                margin 0.25s ease;
+}
+
+/* --- 展开按钮 — 默认隐藏，收起态才显示 --- */
 .script-input-expand-btn {
     display: none;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     width: 100%;
     min-height: 44px;
-    border: 1.5px dashed var(--border);
+    border: 1.5px solid rgba(0, 122, 255, 0.25);
     border-radius: 12px;
-    background: #F9F9FB;
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    color: var(--primary);
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s;
     font-family: inherit;
     -webkit-tap-highlight-color: transparent;
 }
 .script-input-expand-btn:active {
-    background: #F0F0F5;
+    background: rgba(0, 122, 255, 0.06);
     border-color: var(--primary);
-    color: var(--primary);
+    box-shadow: 0 1px 6px rgba(0, 122, 255, 0.15);
 }
 .script-input-expand-btn .expand-icon {
     font-size: 18px;

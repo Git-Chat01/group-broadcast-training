@@ -1041,12 +1041,15 @@ const Trainee = {
             </div>
 
             <div class="script-input-bar" id="scriptInputBar">
+                <div class="script-input-handle" onclick="Trainee.toggleInputBar()">
+                    <span class="handle-bar"></span>
+                </div>
                 <button class="script-input-expand-btn" id="scriptExpandBtn" onclick="Trainee.toggleInputBar()">
                     <span class="expand-icon">✏️</span> 写话术
                 </button>
                 <textarea id="scriptContentInput" placeholder="在这里写你自己的话术版本...">${this.escapeHtml(currentContent)}</textarea>
                 <div class="script-input-actions">
-                    <button class="btn-script-collapse" onclick="Trainee.toggleInputBar()">收起 ▲</button>
+                    <button class="btn-script-collapse" onclick="Trainee.toggleInputBar()">收起</button>
                     <button class="btn-script-read" onclick="Trainee.openReadMode()">试读</button>
                     <button class="btn-script-submit" onclick="Trainee.submitScript()">提交</button>
                 </div>
@@ -1080,22 +1083,11 @@ const Trainee = {
         const bar = document.getElementById("scriptInputBar");
         if (!bar) return;
         const hasContent = currentContent && currentContent.trim().length > 0;
+        this._inputBarExpanded = hasContent;
         if (hasContent) {
-            // 有已有内容 → 展开
-            this._inputBarExpanded = true;
             bar.classList.remove("collapsed");
-            const textarea = document.getElementById("scriptContentInput");
-            if (textarea) textarea.style.display = "";
-            const actions = bar.querySelector(".script-input-actions");
-            if (actions) actions.style.display = "";
         } else {
-            // 空内容 → 收起，只显示「写话术」按钮
-            this._inputBarExpanded = false;
             bar.classList.add("collapsed");
-            const textarea = document.getElementById("scriptContentInput");
-            if (textarea) textarea.style.display = "none";
-            const actions = bar.querySelector(".script-input-actions");
-            if (actions) actions.style.display = "none";
         }
     },
 
@@ -1104,24 +1096,20 @@ const Trainee = {
         const bar = document.getElementById("scriptInputBar");
         if (!bar) return;
         const textarea = document.getElementById("scriptContentInput");
-        const actions = bar.querySelector(".script-input-actions");
 
         if (this._inputBarExpanded) {
-            // 收起：隐藏 textarea + 按钮，blur 释放键盘
+            // 收起：CSS 过渡接管，blur 释放键盘
             this._inputBarExpanded = false;
             bar.classList.add("collapsed");
-            if (textarea) { textarea.style.display = "none"; textarea.blur(); }
-            if (actions) actions.style.display = "none";
+            if (textarea) textarea.blur();
             window.scrollTo(0, 0);
         } else {
-            // 展开：显示 textarea + 按钮，自动 focus
+            // 展开：CSS 过渡接管，自动 focus
             this._inputBarExpanded = true;
             bar.classList.remove("collapsed");
             if (textarea) {
-                textarea.style.display = "";
                 setTimeout(function() { textarea.focus(); }, 100);
             }
-            if (actions) actions.style.display = "";
             bar.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
     },
@@ -1132,10 +1120,6 @@ const Trainee = {
         this._inputBarExpanded = true;
         const bar = document.getElementById("scriptInputBar");
         if (bar) bar.classList.remove("collapsed");
-        const textarea = document.getElementById("scriptContentInput");
-        if (textarea) textarea.style.display = "";
-        const actions = document.querySelector(".script-input-actions");
-        if (actions) actions.style.display = "";
     },
 
     /** 收起输入栏 */
@@ -1145,9 +1129,7 @@ const Trainee = {
         const bar = document.getElementById("scriptInputBar");
         if (bar) bar.classList.add("collapsed");
         const textarea = document.getElementById("scriptContentInput");
-        if (textarea) { textarea.style.display = "none"; textarea.blur(); }
-        const actions = document.querySelector(".script-input-actions");
-        if (actions) actions.style.display = "none";
+        if (textarea) textarea.blur();
     },
 
     /** 检查是否已看完所有示范话术 */
