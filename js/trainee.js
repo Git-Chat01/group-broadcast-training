@@ -1068,6 +1068,9 @@ const Trainee = {
 
         // 初始化输入栏状态：有内容则展开，空则收起
         this._initInputBarState(currentContent);
+
+        // 绑定下滑收起手势
+        this._attachCollapseSwipe();
     },
 
     /** 示范话术当前索引 */
@@ -1098,8 +1101,10 @@ const Trainee = {
         const textarea = document.getElementById("scriptContentInput");
 
         if (this._inputBarExpanded) {
-            // 收起：CSS 过渡接管，blur 释放键盘
+            // 收起：清理手势残留 transform，CSS 过渡接管，blur 释放键盘
             this._inputBarExpanded = false;
+            bar.style.transform = "";
+            bar.style.transition = "";
             bar.classList.add("collapsed");
             if (textarea) textarea.blur();
             window.scrollTo(0, 0);
@@ -1130,6 +1135,71 @@ const Trainee = {
         if (bar) bar.classList.add("collapsed");
         const textarea = document.getElementById("scriptContentInput");
         if (textarea) textarea.blur();
+    },
+
+    /** 绑定下滑收起手势 — 在把手/输入栏区域往下滑超过阈值即收起 */
+    _attachCollapseSwipe() {
+        const bar = document.getElementById("scriptInputBar");
+        if (!bar) return;
+
+        let startY = 0;
+        let swiping = false;
+        let translateY = 0;
+        const threshold = 50;       // px，超过此距离触发收起
+        const maxPull = 90;         // 最大拖拽距离（之后加阻尼）
+        const self = this;
+
+        bar.addEventListener("touchstart", function(e) {
+            if (!self._inputBarExpanded) return;
+            startY = e.touches[0].clientY;
+            swiping = false;
+            translateY = 0;
+        }, { passive: true });
+
+        bar.addEventListener("touchmove", function(e) {
+            if (!self._inputBarExpanded || swiping === null) return;
+            const deltaY = e.touches[0].clientY - startY;
+            if (deltaY <= 5) return; // 留死区，避免误触
+
+            // 如果在可滚动的 textarea 内且还没到顶，不拦截
+            const textarea = document.getElementById("scriptContentInput");
+            if (textarea && textarea.scrollTop > 0) return;
+
+            // 确认为下滑手势
+            if (!swiping) {
+                swiping = true;
+                bar.style.transition = "none";
+            }
+            e.preventDefault();
+
+            // 带阻尼：超过 maxPull 后阻力变大
+            translateY = deltaY > maxPull
+                ? maxPull + (deltaY - maxPull) * 0.25
+                : deltaY;
+            bar.style.transform = "translateY(" + translateY + "px)";
+        }, { passive: false });
+
+        const endSwipe = function() {
+            if (!swiping) return;
+            bar.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
+            if (translateY > threshold) {
+                // 超过阈值 → 收起
+                bar.style.transform = "";
+                self.toggleInputBar();
+            } else {
+                // 未超阈值 → 回弹
+                bar.style.transform = "translateY(0)";
+                setTimeout(function() {
+                    bar.style.transform = "";
+                    bar.style.transition = "";
+                }, 260);
+            }
+            swiping = false;
+            translateY = 0;
+        };
+
+        bar.addEventListener("touchend", endSwipe);
+        bar.addEventListener("touchcancel", endSwipe);
     },
 
     /** 检查是否已看完所有示范话术 */
