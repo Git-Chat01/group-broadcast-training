@@ -1038,21 +1038,26 @@
     line-height: 1;
 }
 
-/* 展开态收起按钮 */
+/* 展开态收起按钮 — 与「试读」「提交」同级，统一采用浅灰底按钮风格 */
 .btn-script-collapse {
-    background: transparent;
-    color: var(--text-muted);
+    background: #F2F2F7;
+    color: #5C5C6E;
     border: none;
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
     min-height: 44px;
-    padding: 0 10px;
+    min-width: 64px;
+    padding: 0 14px;
+    border-radius: 12px;
     font-family: inherit;
+    white-space: nowrap;
+    transition: all 0.15s;
     -webkit-tap-highlight-color: transparent;
 }
 .btn-script-collapse:active {
-    color: var(--text-secondary);
+    background: #E5E5EA;
+    transform: scale(0.98);
 }
 
 /* --- 试读模式 --- */
