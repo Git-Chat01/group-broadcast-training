@@ -13,3 +13,6 @@ extract-pdf-images.cjs
 setup-claude.ps1
 start-claude.ps1
 install-config.ps1
+temp_docx_v3.xml
+wardrobe-dist.tar.gz
+*.tar.gz
