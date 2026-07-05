@@ -9,7 +9,7 @@
    详见 js/data.js 顶部注释中的三处版本号说明。
    ============================================ */
 
-const CACHE_NAME = "cide-v79";
+const CACHE_NAME = "cide-v80";
 const CACHE_ASSETS = [
   "/",
   "/index.html",

@@ -1044,6 +1044,34 @@ const DB = {
     }
   },
 
+  // ===== 设备注册限制 =====
+
+  /**
+   * 获取本设备已注册的账号列表（localStorage key 不同步到 GitHub，每台设备独立计数）
+   * @returns {string[]} 本设备注册的艺名数组
+   */
+  _getDeviceRegistrations() {
+    try {
+      return JSON.parse(localStorage.getItem("device_registrations")) || [];
+    } catch (e) {
+      return [];
+    }
+  },
+
+  /** 获取本设备已注册账号数量 */
+  getDeviceRegistrationCount() {
+    return this._getDeviceRegistrations().length;
+  },
+
+  /** 记录一次新注册（仅在确认注册成功后调用） */
+  addDeviceRegistration(name) {
+    const list = this._getDeviceRegistrations();
+    if (!list.includes(name)) {
+      list.push(name);
+      localStorage.setItem("device_registrations", JSON.stringify(list));
+    }
+  },
+
   /** 公开接口：停止轮询（由 App.logout 调用） */
   stopPolling() {
     this._stopGitHubPolling();

@@ -231,6 +231,12 @@ const App = {
                 this._completeTraineeLogin(name);
 
             } else if (this._loginState !== "setup") {
+                // === 设备注册限制：真新账号（非同步过来的）需检查本设备是否已满 ===
+                if (!exists && DB.getDeviceRegistrationCount() >= 2) {
+                    showMsg("本设备最多注册 2 个账号，如需更多请联系培训师", "error");
+                    return;
+                }
+
                 // === 首次点击：进入注册/设置模式 ===
                 this._loginState = "setup";
                 confirmEl.style.display = "block";
@@ -249,6 +255,8 @@ const App = {
 
                 const result = await Auth.setNewPassword(name, pwd);
                 if (!result.ok) { showMsg(result.error, "error"); return; }
+                // 真新账号注册成功后，记录到本设备列表（用于限制每设备最多 2 个账号）
+                if (!exists) DB.addDeviceRegistration(name);
                 this._completeTraineeLogin(name);
             }
         });

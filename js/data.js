@@ -15,7 +15,7 @@
  *   简单规则：随便选一个数字（如 62），三处全部改成它。
  *   DATA_VERSION  ≠ ?v=  时不会报错，但可能新题库被旧 CSS/JS 缓存拖垮样式。
  */
-const DATA_VERSION = 58;
+const DATA_VERSION = 59;
 /** 考试合格分数线 */
 const PASS_THRESHOLD = 60;
 
