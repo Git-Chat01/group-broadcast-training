@@ -21,7 +21,8 @@ const PASS_THRESHOLD = 60;
 
 const Defaults = {
   // 管理密码默认值 — SHA-256 哈希（盐: cide_salt_2026），非明文
-  adminPassword: "d2a91fccac7573a0eb21da14de7c910717ced451c2334d56f41ef6948a83a4e0",
+  // 2026-08-15 安全加固：旧默认哈希曾随公开仓库泄露，已更换为随机强密码
+  adminPassword: "4005264bf0a3ed25110671e5f022b3d1d3e3c8f0fa19670be7c4f513b0373c01",
 
   modules: [], // 旧版 PPT 式模块已废弃，由能力清单 + 考试体系取代
 

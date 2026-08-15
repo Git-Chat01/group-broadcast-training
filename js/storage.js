@@ -95,7 +95,9 @@ const DB = {
   async _pullFromGitHub() {
     if (!this._githubReady()) return false;
     try {
-      const resp = await fetch(GITHUB_CONFIG.syncWorker + "/api/sync");
+      const resp = await fetch(GITHUB_CONFIG.syncWorker + "/api/sync", {
+        headers: { "X-Sync-Key": GITHUB_CONFIG.syncKey },
+      });
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         // 404 或 db.json 不存在 → 首次使用，正常跳过
@@ -248,7 +250,10 @@ const DB = {
 
       const resp = await fetch(GITHUB_CONFIG.syncWorker + "/api/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Sync-Key": GITHUB_CONFIG.syncKey,
+        },
         body: JSON.stringify(body),
       });
 
@@ -317,7 +322,7 @@ const DB = {
 
     // 首次初始化：全部写入
     if (!storedVersion) {
-      localStorage.setItem("adminPassword", defaults.adminPassword || "admin123");
+      localStorage.setItem("adminPassword", defaults.adminPassword || "");
       localStorage.setItem("modules", JSON.stringify(defaults.modules || []));
       localStorage.setItem("exams", JSON.stringify(defaults.exams || {}));
       localStorage.setItem("checklist", JSON.stringify(defaults.checklist || []));
@@ -502,7 +507,10 @@ const DB = {
 
   // ===== 管理密码 =====
   getAdminPassword() {
-    return localStorage.getItem("adminPassword") || "admin123";
+    // 安全加固（2026-08-15）：删除明文默认密码兜底。
+    // 空值表示"未设置密码"，登录必然失败（fail-closed），
+    // 正常流程下 init() 会用 data.js 中的哈希默认值初始化。
+    return localStorage.getItem("adminPassword") || "";
   },
   setAdminPassword(newPwd) {
     localStorage.setItem("adminPassword", newPwd);
