@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 python-deps/
 .claude/
 *.pdf
@@ -17,3 +17,5 @@ temp_docx_v3.xml
 wardrobe-dist.tar.gz
 *.tar.gz
 settings.json
+
+db.json
